@@ -1,12 +1,12 @@
+#!/usr/bin/env python
+
 ###  CGI Digital Services - LEaRN 
 ###  March 2017
-### Application to read O3 Senser (MQ315) from the Raspberry Pi 3 Rev. B 
-### Converts the analog value to digital value with the MCP3002 chip
-### Once we have that value, it will convert it to an equation to get the parts per billion (ppb) value
-### Finally, the value will be stored in a JSON object to POST a request from the SensorThings API that is in an Microsoft Azure instance
-### V0.0.1
-
-#!/usr/bin/python
+###  Application to read O3 Senser (MQ315) from the Raspberry Pi 3 Rev. B 
+###  Converts the analog value to digital value with the MCP3002 chip
+###  Once we have that value, it will convert it to an equation to get the parts per billion (ppb) value
+###  Finally, the value will be stored in a JSON object to POST a request from the SensorThings API that is in an Microsoft Azure instance
+###  V0.0.1
 
 import os
 import glob
@@ -17,6 +17,9 @@ import math
 import requests
 
 import RPi.GPIO as GPIO
+
+# Only for testing to demonstrate re-authentication
+import time
 
 vref = 3.3 * 1000 # V-Ref in mV (Vref = VDD for the MCP3002)
 resolution = 2**10 # for 10 bits of resolution
@@ -44,8 +47,22 @@ RL_MQ131 = 0.679                      # MQ131 Sainsmart Resistor Load value
 READ_SAMPLE_VALUES = 5                # Number of samples to read to get average
 READ_SAMPLE_TIME = 0.5                # Reads sample data in milliseconds
 
-# SensorThings API in Microsoft Azure instance
-URL = "http://sensorthings.southcentralus.cloudapp.azure.com:8080/device/api/v1.0/Observations"
+# Per-device ID and key.
+JWT_ID = os.environ['JWT_ID']
+JWT_KEY = os.environ['JWT_KEY']
+
+# Feature of Interest ID and Datastream ID 
+FOI_ID = os.environ['FEATURE_OF_INTEREST_ID']
+DS_ID = os.environ['DATASTREAM_ID']
+ 
+AUTH_TTL = datetime.timedelta(minutes=15)
+
+# SensorThings API in Microsoft Azure instance with authentication 
+URL = "https://sensorthings.southcentralus.cloudapp.azure.com/device/api/v1.0/Observations"
+URL_AUTH = "https://sensorthings.southcentralus.cloudapp.azure.com/device/api/auth/login"
+
+# SensorThings API in Microsoft Azure instance withont authentication
+# URL = "http://sensorthings.southcentralus.cloudapp.azure.com:8080/device/api/v1.0/Observations"
 
 # JSON id / values to send to SensorThings API standard
 JSON_TEMPLATE = '''{{"FeatureOfInterest":{{"@iot.id":"{featureOfInterestId}"}},
@@ -55,8 +72,43 @@ JSON_TEMPLATE = '''{{"FeatureOfInterest":{{"@iot.id":"{featureOfInterestId}"}},
   "result":"{result}"
 }}'''
 
+# JWT anthenication standard 
+AUTH_TEMPLATE = '''{{"id":"{id}","key":"{key}"}}'''
+
+# Method to authenticate using JSON Web Token (JWT)
+# and check if you need it or not
+def jwt_authenticate(token=(None, None)):
+    new_token = token
+    auth_required = False
+ 
+    # Figure out if authentication is required, that is: (1) if we have never authenticated (token_timestamp is None);
+    #   or (2) token_timestamp is later than or equal to the current time + AUTH_TTL
+    token_timestamp = token[1]
+    if token_timestamp is None:
+        print("Auth token is null, authenticating ...")
+        auth_required = True
+    else:
+        token_expired_after = token_timestamp + AUTH_TTL
+        if datetime.datetime.utcnow() >= token_expired_after:
+            print("Auth token expired, re-authenticating ...")
+            auth_required = True
+ 
+    if auth_required:
+        json = AUTH_TEMPLATE.format(id=JWT_ID, key=JWT_KEY)
+        headers = {'Content-Type': 'application/json'}
+        r = requests.post(URL_AUTH, headers=headers, data=json)
+        print("Auth status code was {0}".format(r.status_code))
+        if r.status_code != 200:
+            print("ERROR: Authentication failed")
+            new_token = (None, None)
+        else:
+            new_token = (r.json()["token"], datetime.datetime.utcnow())
+ 
+    return new_token
+
 # POST to SensorThings API after average ppb is calculated
-def post_observation(featureOfInterestId,
+def post_observation(token,
+                     featureOfInterestId,
                      datastreamId,
                      phenomenonTime,
                      result,
@@ -68,11 +120,25 @@ def post_observation(featureOfInterestId,
                                 result=result,
                                 parametersStr=parametersStr)
     print("Posting new data {0}".format(json))
-    headers = {'Content-Type': 'application/json'}
+    headers = {'Content-Type': 'application/json',
+               'Authorization': "Bearer {token}".format(token=token[0])}
     r = requests.post(URL, headers=headers, data=json)
     print("Status code was {0}".format(r.status_code))
     location = r.headers['Location']
     print("Location: {0}".format(location))
+
+# Example showing first-time authentication
+def first_time_auth(jwt_token, ppb, voltage, Rs, Ro, Rs_Ro_Ratio):
+    jwt_token = jwt_authenticate(jwt_token)
+    if jwt_token[0] is None:
+        print("Unable to authenticate using JWT")
+    else:
+        post_observation(token=jwt_token,
+                         featureOfInterestId=FOI_ID,
+                         datastreamId=DS_ID,
+                         phenomenonTime=datetime.datetime.now().isoformat(),
+                         result=str(ppb),
+                         parameters={"voltage": str(voltage), "Rs": str(Rs), "Ro": str(Ro), "Rs_Ro_Ratio": str(Rs_Ro_Ratio)})
 
 # read SPI data from MCP3002 chip, 2 possible adc's (0 thru 1)
 def readadc(adcnum, clockpin, mosipin, misopin, cspin):
@@ -145,7 +211,10 @@ def convertPPMToPPB(ppm):
     return ppm * 1000
 
 def main():
-    print "03 Sensor Data"
+    # Initializes the token 
+    jwt_token = (None, None)
+
+    print "O3 Sainsmart Sensor Data"
     print "-----------------------------------------------------------------"
     try:
         # Run forever
@@ -156,28 +225,28 @@ def main():
                 # Analog to Digital Conversion from the MQ3002 chip to get voltage
                 # Get 5 reading to get a stable value 
                 o3SensorAnalogValue1 = readadc(adcnum, SPICLK, SPIMOSI, SPIMISO, SPICS)
-                print "The Analog to Digital value1 ",
-                print  o3SensorAnalogValue1, "\t",
+                #print "The Analog to Digital value1 ",
+                #print  o3SensorAnalogValue1, "\t",
                 count += 1
                 time.sleep(5) # Every five seconds
                 o3SensorAnalogValue2 = readadc(adcnum, SPICLK, SPIMOSI, SPIMISO, SPICS)
-                print "The Analog to Digital value2 ",
-                print  o3SensorAnalogValue2, "\t",
+                #print "The Analog to Digital value2 ",
+                #print  o3SensorAnalogValue2, "\t",
                 count += 1
                 time.sleep(5) # Every five seconds
                 o3SensorAnalogValue3 = readadc(adcnum, SPICLK, SPIMOSI, SPIMISO, SPICS)
-                print "The Analog to Digital value3 ",
-                print  o3SensorAnalogValue3, "\t",
+                #print "The Analog to Digital value3 ",
+                #print  o3SensorAnalogValue3, "\t",
                 count += 1
                 time.sleep(5) # Every five seconds
                 o3SensorAnalogValue4 = readadc(adcnum, SPICLK, SPIMOSI, SPIMISO, SPICS)
-                print "The Analog to Digital value4 ",
-                print  o3SensorAnalogValue4, "\t",
+                #print "The Analog to Digital value4 ",
+                #print  o3SensorAnalogValue4, "\t",
                 count += 1
                 time.sleep(5) # Every five seconds
                 o3SensorAnalogValue5 = readadc(adcnum, SPICLK, SPIMOSI, SPIMISO, SPICS)
-                print "The Analog to Digital value5 ",
-                print  o3SensorAnalogValue5, "\t",
+                #print "The Analog to Digital value5 ",
+                #print  o3SensorAnalogValue5, "\t",
                 count += 1
                 
                 # Average reading 
@@ -189,13 +258,10 @@ def main():
                 # Voltage from average reading
                 voltage = voltageADC(o3SensorAnalogValueAvg)
 
-                # Get vrl for Rs value
-                #Vrl = vrl(o3SensorAnalogValueAvg)
-
-                # Get the Rs value from the average of the 5 readings
+                # Get the Rs value (O3 concentrations of gases) from the average of the 5 readings
                 Rs = MQResistance(o3SensorAnalogValueAvg, RL_MQ131)
 
-                # Get the Ro value from the average of the 5 readings
+                # Get the Ro (Clean Air) value from the average of the 5 readings
                 Ro =  MQCalibration(Rs)
 
                 # Get Ratio from the Rs and Ro values
@@ -209,19 +275,16 @@ def main():
 
                 print "The PPB ",
                 print  ppb, "\t",
-                
-                post_observation(featureOfInterestId="f8ee9ea0-1279-11e7-b571-452d030d47d5",
-                    datastreamId="230ba5a0-127c-11e7-b571-452d030d47d5",
-                    phenomenonTime=datetime.datetime.now().isoformat(),
-                    result=str(ppb),
-                    parameters={"voltage": str(voltage), "Rs": str(Rs), "Ro": str(Ro), "Rs_Ro_Ratio": str(Rs_Ro_Ratio)})
+
+                # Authentication and POST to SensorThings API
+                first_time_auth(jwt_token, ppb, voltage, Rs, Ro, Rs_Ro_Ratio)
 
             print "|"
 
     except KeyboardInterrupt:
         GPIO.cleanup()
         
-
-main()
+if __name__ == '__main__':
+    main()
 
 
