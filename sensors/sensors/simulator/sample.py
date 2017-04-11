@@ -3,6 +3,7 @@ import multiprocessing as mp
 import random
 import sched
 import time
+import os
 
 import sensors.persistence.spool as spool
 from sensors.common.logging import configure_logger
@@ -32,20 +33,21 @@ def generate_observation(featureOfInterestId, datastreamId, phenomenonTime,
     return o
 
 
-def generate_ozone_MQ131(featureOfInterestId, datastreamId):
+def generate_ozone_MQ131():
+    foi_id = os.environ.get("CGIST_FOI_ID", "c81a4920-100b-11e7-987b-9b2f50364984")
+    ds_id = os.environ.get("CGIST_DS_ID_MQ131", "1e34fad0-100c-11e7-987b-9b2f50364984")
     parameters = {"voltage": str(_rand()),
                   "Rs": str(_rand()),
                   "Ro": str(_rand()),
                   "Rs_Ro_Ratio": str(_rand())}
-    return generate_observation(featureOfInterestId, datastreamId,
+    return generate_observation(foi_id, ds_id,
                                 datetime.datetime.now().isoformat(),
                                 str(_rand()), parameters)
 
 
 def generate_observations_minute(queue):
     logger.debug("Generating O3 observation...")
-    o = generate_ozone_MQ131("c81a4920-100b-11e7-987b-9b2f50364984",
-                             "1e34fad0-100c-11e7-987b-9b2f50364984")
+    o = generate_ozone_MQ131()
     logger.debug("Queuing observation {0}...".format(str(o)))
     queue.put(o)
     logger.debug("done")

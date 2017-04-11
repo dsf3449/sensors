@@ -5,40 +5,34 @@ import os
 import io
 
 import requests
+from requests_toolbelt.adapters import host_header_ssl
 
 from sensors.common.logging import configure_logger
 from sensors.persistence.sqlite import SqliteRepository
 
 
 logger = configure_logger()
+jwt_token = (None, None)
+# Requests session
+session = None
 
 # Per-device ID and key.
 JWT_ID = os.environ.get('JWT_ID', "2694b9e1-ce59-4fd5-b95e-aa1c780e8158")
 JWT_KEY = os.environ.get('JWT_KEY', "ecacdce7-7374-408b-997b-5877bf9e37c3")
 
-# Feature of Interest ID and Datastream ID
-# FOI_ID = os.environ['FEATURE_OF_INTEREST_ID']
-# DS_ID = os.environ['DATASTREAM_ID']
-
 TRANSMIT_INTERVAL_SECONDS = 15
 SCHEDULE_PRIORITY_DEFAULT = 1
 
-AUTH_TTL = datetime.timedelta(minutes=15)
+AUTH_TTL = datetime.timedelta(minutes=int(os.environ.get('CGIST_AUTH_TTL', "15")))
 
-# SensorThings API in Microsoft Azure instance with authentication
-URL = "https://sensorthings.southcentralus.cloudapp.azure.com/device/api/v1.0/Observations"
-URL_AUTH = "https://sensorthings.southcentralus.cloudapp.azure.com/device/api/auth/login"
+URL = os.environ.get('CGIST_URL',
+                     'https://sensorthings.southcentralus.cloudapp.azure.com/device/api/v1.0/CreateObservations')
+URL_AUTH = os.environ.get('CGIST_AUTH_URL',
+                          'https://sensorthings.southcentralus.cloudapp.azure.com/device/api/auth/login')
+# ONLY SET THIS IN DEVELOPMENT!!!
+VERIFY_SSL = not bool(os.environ.get('CGIST_IGNORE_SSL_ERRORS', False))
 
-# SensorThings API in Microsoft Azure instance withont authentication
-# URL = "http://sensorthings.southcentralus.cloudapp.azure.com:8080/device/api/v1.0/Observations"
-
-# JSON id / values to send to SensorThings API standard
-# JSON_TEMPLATE = '''{{"FeatureOfInterest":{{"@iot.id":"{featureOfInterestId}"}},
-#   "Datastream":{{"@iot.id":"{datastreamId}"}},
-#   "phenomenonTime":"{phenomenonTime}",
-#   "parameters":{{{parametersStr}}},
-#   "result":"{result}"
-# }}'''
+SUCCESS_STATUS_CODE = 201
 
 # JWT authentication request token
 AUTH_TEMPLATE = '''{{"id":"{id}","key":"{key}"}}'''
@@ -78,7 +72,7 @@ def jwt_authenticate(token=(None, None)):
     if auth_required:
         json = AUTH_TEMPLATE.format(id=JWT_ID, key=JWT_KEY)
         headers = {'Content-Type': 'application/json'}
-        r = requests.post(URL_AUTH, headers=headers, data=json)
+        r = session.post(URL_AUTH, headers=headers, data=json, verify=VERIFY_SSL)
         print(("Auth status code was {0}".format(r.status_code)))
         if r.status_code != 200:
             print("ERROR: Authentication failed")
@@ -88,27 +82,6 @@ def jwt_authenticate(token=(None, None)):
 
     return new_token
 
-
-# POST to SensorThings API after average ppb is calculated
-# def post_observation(token,
-#                      featureOfInterestId,
-#                      datastreamId,
-#                      phenomenonTime,
-#                      result,
-#                      parameters={}):
-#     parametersStr = ",".join(['"{k}":"{v}"'.format(k=e[0], v=e[1]) for e in list(parameters.items())])
-#     json = JSON_TEMPLATE.format(featureOfInterestId=featureOfInterestId,
-#                                 datastreamId=datastreamId,
-#                                 phenomenonTime=phenomenonTime,
-#                                 result=result,
-#                                 parametersStr=parametersStr)
-#     print(("Posting new data {0}".format(json)))
-#     headers = {'Content-Type': 'application/json',
-#                'Authorization': "Bearer {token}".format(token=token[0])}
-#     r = requests.post(URL, headers=headers, data=json)
-#     print(("Status code was {0}".format(r.status_code)))
-#     location = r.headers['Location']
-#     print(("Location: {0}".format(location)))
 
 def observations_list_to_dict(observations):
     d = {}
@@ -156,7 +129,7 @@ def observations_to_json(observations_dict):
                 # Third, write Datastream JSON
                 json.write(d)
                 if i < numDatastreams:
-                    # There is following Datastream
+                    # There is one or more remaining Datastream(s)
                     json.write(',')
         json.write(']')
     json_str = json.getvalue()
@@ -166,17 +139,44 @@ def observations_to_json(observations_dict):
 
 
 def transmit(repo):
+    global jwt_token
     obs = repo.get_observations()
     logger.debug("Transmitter: read {0} observations from DB.".format(len(obs)))
     if len(obs) > 0:
+        # Serialize observations to SensorThings dataArray JSON
         obs_dict = observations_list_to_dict(obs)
         json = observations_to_json(obs_dict)
         logger.debug("Transmitter: JSON payload: {0}".format(json))
+        # POST observations
+        jwt_token = jwt_authenticate(jwt_token)
+        if jwt_token[0] is None:
+            raise AuthenticationException()
+
+        headers = {'Content-Type': 'application/json',
+                   'Authorization': "Bearer {token}".format(token=jwt_token[0])}
+        logger.debug("Transmitter: Posting data to {0}...".format(URL))
+        r = session.post(URL, headers=headers, data=json, verify=VERIFY_SSL)
+        logger.debug("Transmitter: Status code was {0}".format(r.status_code))
+        if r.status_code != SUCCESS_STATUS_CODE:
+            raise TransmissionException("Transmission failed with status code: {0}".format(r.status_code))
+
+        # TODO: Decide whether/how to handle observations that result in an error on creation
+        #       See: http://docs.opengeospatial.org/is/15-078r6/15-078r6.html#84
+
+        # Remove transmitted observations from local database
+        ids_to_delete = [o.id for o in obs]
+        repo.delete_observations(ids_to_delete)
 
 
 def main():
     repo = SqliteRepository()
     s = sched.scheduler(time.time, time.sleep)
+
+    global session
+    session = requests.session()
+
+    if not VERIFY_SSL:
+        session.mount('https://', host_header_ssl.HostHeaderSSLAdapter())
 
     while True:
         try:
@@ -190,6 +190,19 @@ def main():
             logger.debug("Transmitter: End of iteration.")
         except KeyboardInterrupt:
             break
+        except AuthenticationException:
+            logger.error("Transmitter: Error authenticating to {0}".format(URL_AUTH))
+        except TransmissionException as te:
+            logger.error("Transmitter: {0}".format(te.message))
         finally:
             pass
     logger.info("Transmitter: exiting.")
+
+
+class AuthenticationException(Exception):
+    pass
+
+
+class TransmissionException(Exception):
+    def __init__(self, message):
+        self.message = message
