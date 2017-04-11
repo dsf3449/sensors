@@ -1,7 +1,9 @@
-import logging
+from sensors.common.logging import get_logger
 
 
 class Observation:
+
+    logger = get_logger()
 
     def __init__(self):
         self.id = None
@@ -46,7 +48,7 @@ class Observation:
                 (k, v) = p.split(':')
                 self.parameters[k.strip('"')] = v.strip('"')
             except ValueError:
-                logging.error("set_parameters_from_json(): Unable to parse parameter {0}", p)
+                self.logger.error("set_parameters_from_json(): Unable to parse parameter {0}", p)
                 continue
 
     def get_parameters_as_str(self):

@@ -1,7 +1,6 @@
 
 import multiprocessing as mp
 
-import sensors.network.spool
 
 def main():
     try:

@@ -1,10 +1,18 @@
+import os
 import unittest
 
-from sensors.persistence.sqlite import SqliteRepository
+import sensors.common.constants as constants
 from sensors.domain.observation import Observation
+from sensors.persistence.sqlite import SqliteRepository
 
 
 class TestSqliteRepository(unittest.TestCase):
+
+    def setUp(self):
+        try:
+            os.unlink(constants.DB_PATH)
+        except FileNotFoundError:
+            pass
 
     def test_rw_observations(self):
         repo = SqliteRepository()
