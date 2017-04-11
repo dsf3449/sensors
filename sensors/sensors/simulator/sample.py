@@ -1,15 +1,15 @@
-import multiprocessing as mp
 import datetime
-
+import multiprocessing as mp
 import random
 import sched
 import time
 
+import sensors.persistence.spool as spool
 from sensors.common.logging import configure_logger
-import sensors.network.spool as spool
 from sensors.domain.observation import Observation
 
 SAMPLE_INTERVAL_ONE_MINUTE = 5
+SCHEDULE_PRIORITY_DEFAULT = 1
 
 
 # Configure logging
@@ -64,17 +64,18 @@ def main():
 
         while True:
             # Schedule event to run every minute
-            logger.debug("Scheduling...")
+            logger.debug("Sampler: scheduling observation sampling...")
             s.enter(SAMPLE_INTERVAL_ONE_MINUTE,
-                    1,
+                    SCHEDULE_PRIORITY_DEFAULT,
                     generate_observations_minute,
                     argument=(q,))
             # Run scheduled events
-            logger.debug("Running...")
+            logger.debug("Sampler: Running scheduler...")
             s.run()
-            logger.debug("End of iteration.")
+            logger.debug("Sampler: End of iteration.")
     except:
         pass
     finally:
         if p:
             p.join()
+        logger.info("Simulator: exiting.")
