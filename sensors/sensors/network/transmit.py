@@ -173,7 +173,12 @@ def transmit(repo):
                 ids_to_delete.append(obs[i].id)
 
         repo.delete_observations(ids_to_delete)
+        logger.debug("Transmitter: Successfully submitted {0} observations.".format(len(ids_to_delete)))
         repo.update_observation_status(ids_to_update_status, status=SqliteRepository.STATUS_ERROR)
+        mesg = ("Transmitter: Failed to submit {0} observations, "
+                "which were retained in local database with status {1}.").format(len(ids_to_update_status),
+                                                                                 SqliteRepository.STATUS_ERROR)
+        logger.debug(mesg)
 
 
 def main():
@@ -182,7 +187,6 @@ def main():
 
     global session
     session = requests.session()
-
     if not VERIFY_SSL:
         session.mount('https://', host_header_ssl.HostHeaderSSLAdapter())
 
