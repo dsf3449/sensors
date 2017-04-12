@@ -40,11 +40,17 @@ class TestSqliteRepository(unittest.TestCase):
         self.assertTrue(o1, obs[0])
         self.assertTrue(o2, obs[1])
 
-        ids_to_delete = [o.id for o in obs]
+        ids_to_delete = [obs[0].id]
         repo.delete_observations(ids_to_delete)
+
+        ids_to_update = [obs[1].id]
+        repo.update_observation_status(ids_to_update)
 
         obs = repo.get_observations()
         self.assertEquals(0, len(obs))
+
+        obs = repo.get_all_observations()
+        self.assertEquals(1, len(obs))
 
 if __name__ == '__main__':
     unittest.main()

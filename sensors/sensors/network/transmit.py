@@ -22,6 +22,7 @@ JWT_KEY = os.environ.get('JWT_KEY', "ecacdce7-7374-408b-997b-5877bf9e37c3")
 
 TRANSMIT_INTERVAL_SECONDS = 15
 SCHEDULE_PRIORITY_DEFAULT = 1
+ERROR_RESPONSE = 'error'
 
 AUTH_TTL = datetime.timedelta(minutes=int(os.environ.get('CGIST_AUTH_TTL', "15")))
 
@@ -160,12 +161,19 @@ def transmit(repo):
         if r.status_code != SUCCESS_STATUS_CODE:
             raise TransmissionException("Transmission failed with status code: {0}".format(r.status_code))
 
-        # TODO: Decide whether/how to handle observations that result in an error on creation
-        #       See: http://docs.opengeospatial.org/is/15-078r6/15-078r6.html#84
+        # Remove observations from local data, unless the observation could not be
+        #   created, then update its status to error.
+        ids_to_delete = []
+        ids_to_update_status = []
 
-        # Remove transmitted observations from local database
-        ids_to_delete = [o.id for o in obs]
+        for (i, e) in enumerate(r.json()):
+            if e == ERROR_RESPONSE:
+                ids_to_update_status.append(obs[i].id)
+            else:
+                ids_to_delete.append(obs[i].id)
+
         repo.delete_observations(ids_to_delete)
+        repo.update_observation_status(ids_to_update_status, status=SqliteRepository.STATUS_ERROR)
 
 
 def main():
