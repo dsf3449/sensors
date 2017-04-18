@@ -9,7 +9,7 @@ import sensors.persistence.spool as spool
 from sensors.common.logging import configure_logger
 from sensors.domain.observation import Observation
 
-SAMPLE_INTERVAL_ONE_MINUTE = 5
+SAMPLE_INTERVAL_ONE_MINUTE = 1
 SCHEDULE_PRIORITY_DEFAULT = 1
 
 
@@ -17,16 +17,30 @@ SCHEDULE_PRIORITY_DEFAULT = 1
 logger = configure_logger()
 
 
+next_date = None
+di = None
+
+
 def _rand():
     return random.uniform(1.23, 123.45)
 
 
+def _next_date():
+    global next_date
+    if next_date is None:
+        next_date = datetime.datetime.now().isoformat()
+        return next_date
+    next_date = next_date + di
+    return next_date
+
+
 def generate_observation(featureOfInterestId, datastreamId, phenomenonTime,
                          result, parameters):
+    logger.debug("generate_observation: {0}".format(phenomenonTime.isoformat()))
     o = Observation()
     o.featureOfInterestId = featureOfInterestId
     o.datastreamId = datastreamId
-    o.phenomenonTime = phenomenonTime
+    o.phenomenonTime = phenomenonTime.isoformat()
     o.result = result
     o.set_parameters(**parameters)
 
@@ -41,7 +55,7 @@ def generate_ozone_MQ131():
                   "Ro": str(_rand()),
                   "Rs_Ro_Ratio": str(_rand())}
     return generate_observation(foi_id, ds_id,
-                                datetime.datetime.now().isoformat(),
+                                _next_date(),
                                 str(_rand()), parameters)
 
 
@@ -53,7 +67,16 @@ def generate_observations_minute(queue):
     logger.debug("done")
 
 
-def main():
+def main(start_date=datetime.datetime.now().isoformat(),
+         date_interval=datetime.timedelta(minutes=1)):
+    global next_date
+    global di
+
+    next_date = start_date
+    di = date_interval
+
+    logger.info("Start date: {0}, date interval: {1} minutes".format(str(next_date), str(di)))
+
     p = None
     try:
         # Start process to send data to
