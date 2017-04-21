@@ -97,7 +97,7 @@ def jwt_authenticate(token=(None, None)):
         json = AUTH_TEMPLATE.format(id=JWT_ID, key=JWT_KEY)
         headers = {'Content-Type': 'application/json'}
         r = requests.post(URL_AUTH, headers=headers, data=json)
-        print("Auth status code was {0}".format(r.status_code))
+        print(("Auth status code was {0}".format(r.status_code)))
         if r.status_code != 200:
             print("ERROR: Authentication failed")
             new_token = (None, None)
@@ -113,19 +113,19 @@ def post_observation(token,
                      phenomenonTime,
                      result,
                      parameters={}):
-    parametersStr = ",".join(['"{k}":"{v}"'.format(k=e[0], v=e[1]) for e in parameters.items()])
+    parametersStr = ",".join(['"{k}":"{v}"'.format(k=e[0], v=e[1]) for e in list(parameters.items())])
     json = JSON_TEMPLATE.format(featureOfInterestId=featureOfInterestId,
                                 datastreamId=datastreamId,
                                 phenomenonTime=phenomenonTime,
                                 result=result,
                                 parametersStr=parametersStr)
-    print("Posting new data {0}".format(json))
+    print(("Posting new data {0}".format(json)))
     headers = {'Content-Type': 'application/json',
                'Authorization': "Bearer {token}".format(token=token[0])}
     r = requests.post(URL, headers=headers, data=json)
-    print("Status code was {0}".format(r.status_code))
+    print(("Status code was {0}".format(r.status_code)))
     location = r.headers['Location']
-    print("Location: {0}".format(location))
+    print(("Location: {0}".format(location)))
 
 # Example showing first-time authentication
 def first_time_auth(jwt_token, ppb, voltage, Rs, Ro, Rs_Ro_Ratio):
@@ -214,13 +214,13 @@ def main():
     # Initializes the token 
     jwt_token = (None, None)
 
-    print "O3 Sainsmart Sensor Data"
-    print "-----------------------------------------------------------------"
+    print("O3 Sainsmart Sensor Data")
+    print("-----------------------------------------------------------------")
     try:
         # Run forever
         count = 0
         while True:
-            print "|",
+            print("|", end=' ')
             for adcnum in range(1):
                 # Analog to Digital Conversion from the MQ3002 chip to get voltage
                 # Get 5 reading to get a stable value 
@@ -251,8 +251,8 @@ def main():
                 
                 # Average reading 
                 o3SensorAnalogValueAvg = (o3SensorAnalogValue1 + o3SensorAnalogValue2 + o3SensorAnalogValue3 + o3SensorAnalogValue4 + o3SensorAnalogValue5) / count
-                print "The Analog to Digital value avg ",
-                print  o3SensorAnalogValueAvg, "\t",
+                print("The Analog to Digital value avg ", end=' ')
+                print(o3SensorAnalogValueAvg, "\t", end=' ')
                 count = 0 # reset counter
 
                 # Voltage from average reading
@@ -273,13 +273,13 @@ def main():
                 # Convert the ppm value to ppb value
                 ppb = convertPPMToPPB(ppm)
 
-                print "The PPB ",
-                print  ppb, "\t",
+                print("The PPB ", end=' ')
+                print(ppb, "\t", end=' ')
 
                 # Authentication and POST to SensorThings API
                 first_time_auth(jwt_token, ppb, voltage, Rs, Ro, Rs_Ro_Ratio)
 
-            print "|"
+            print("|")
 
     except KeyboardInterrupt:
         GPIO.cleanup()
