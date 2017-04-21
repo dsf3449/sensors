@@ -28,12 +28,6 @@ calibration = 38 # in mV, to make up for the precision of the components
 #Logical GPIO numbering schema
 GPIO.setmode(GPIO.BCM)
 
-# change these as desired
-SPICLK = 11 #18
-SPIMOSI = 10 #17
-SPIMISO = 9 #21
-SPICS = 8 #22
-
 # set up the SPI interface pins
 GPIO.setup(SPIMOSI, GPIO.OUT)
 GPIO.setup(SPIMISO, GPIO.IN)
