@@ -17,8 +17,8 @@ jwt_token = (None, None)
 session = None
 
 # Per-device ID and key.
-JWT_ID = os.environ.get('JWT_ID', "2694b9e1-ce59-4fd5-b95e-aa1c780e8158")
-JWT_KEY = os.environ.get('JWT_KEY', "ecacdce7-7374-408b-997b-5877bf9e37c3")
+JWT_ID = os.environ['JWT_ID']
+JWT_KEY = os.environ['JWT_KEY']
 
 TRANSMIT_INTERVAL_SECONDS = 15
 SCHEDULE_PRIORITY_DEFAULT = 1
@@ -26,10 +26,8 @@ ERROR_RESPONSE = 'error'
 
 AUTH_TTL = datetime.timedelta(minutes=int(os.environ.get('CGIST_AUTH_TTL', "15")))
 
-URL = os.environ.get('CGIST_URL',
-                     'https://sensorthings.southcentralus.cloudapp.azure.com/device/api/v1.0/CreateObservations')
-URL_AUTH = os.environ.get('CGIST_AUTH_URL',
-                          'https://sensorthings.southcentralus.cloudapp.azure.com/device/api/auth/login')
+URL = os.environ['CGIST_URL']
+URL_AUTH = os.environ['CGIST_AUTH_URL']
 # ONLY SET THIS IN DEVELOPMENT!!!
 VERIFY_SSL = not bool(os.environ.get('CGIST_IGNORE_SSL_ERRORS', False))
 
