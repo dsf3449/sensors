@@ -73,8 +73,7 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    # install_requires=['requests', 'requests-toolbelt', 'RPi.GPIO'],
-    install_requires=['requests', 'requests-toolbelt'],
+    install_requires=['requests', 'requests-toolbelt', 'RPi.GPIO'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
