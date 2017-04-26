@@ -172,8 +172,7 @@ def generate_ozone_MQ131():
     # Average reading
     o3SensorAnalogValueAvg = (o3SensorAnalogValue1 + o3SensorAnalogValue2 + o3SensorAnalogValue3 + o3SensorAnalogValue4
                               + o3SensorAnalogValue5) / count
-    logger.debug("The Analog to Digital value avg ", )
-    logger.debug(o3SensorAnalogValueAvg, "\t")
+    logger.debug("The Analog to Digital value avg: " + str(o3SensorAnalogValueAvg))
     count = 0  # reset counter
 
     # Voltage from average reading
@@ -194,8 +193,7 @@ def generate_ozone_MQ131():
     # Convert the ppm value to ppb value
     ppb = convertPPMToPPB(ppm)
 
-    logger.debug("The PPB ", )
-    logger.debug(ppb, "\t")
+    logger.debug("The PPB: " + str(Ro))
 
     parameters = {"voltage": str(voltage),
                   "Rs": str(Rs),
