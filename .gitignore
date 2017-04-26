@@ -32,3 +32,8 @@ fabric.properties
 
 # Editors
 *~
+
+# Packaging
+*.egg-info
+build/
+dist/

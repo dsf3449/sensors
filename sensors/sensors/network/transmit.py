@@ -1,5 +1,6 @@
 import sched
 import time
+import sys
 import datetime
 import os
 import io
@@ -17,8 +18,16 @@ jwt_token = (None, None)
 session = None
 
 # Per-device ID and key.
-JWT_ID = os.environ['JWT_ID']
-JWT_KEY = os.environ['JWT_KEY']
+JWT_ID = None
+JWT_KEY = None
+
+try:
+    JWT_ID = os.environ['JWT_ID']
+    JWT_KEY = os.environ['JWT_KEY']
+except KeyError:
+    mesg = "Environment variable JWT_ID or JWT_KEY not defined."
+    logger.error(mesg)
+    sys.exit(mesg)
 
 TRANSMIT_INTERVAL_SECONDS = 15
 SCHEDULE_PRIORITY_DEFAULT = 1
@@ -26,8 +35,17 @@ ERROR_RESPONSE = 'error'
 
 AUTH_TTL = datetime.timedelta(minutes=int(os.environ.get('CGIST_AUTH_TTL', "15")))
 
-URL = os.environ['CGIST_URL']
-URL_AUTH = os.environ['CGIST_AUTH_URL']
+URL = None
+URL_AUTH =None
+
+try:
+    URL = os.environ['CGIST_URL']
+    URL_AUTH = os.environ['CGIST_AUTH_URL']
+except KeyError:
+    mesg = "Environment variable URL or URL_AUTH not defined."
+    logger.error(mesg)
+    sys.exit(mesg)
+
 # ONLY SET THIS IN DEVELOPMENT!!!
 VERIFY_SSL = not bool(os.environ.get('CGIST_IGNORE_SSL_ERRORS', False))
 

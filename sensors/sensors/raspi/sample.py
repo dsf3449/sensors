@@ -1,4 +1,10 @@
-#!/usr/bin/env python3
+###  CGI Digital Services - LEaRN
+###  March 2017
+###  Application to read O3 Senser (MQ315) from the Raspberry Pi 3 Rev. B
+###  Converts the analog value to digital value with the MCP3002 chip
+###  Once we have that value, it will convert it to an equation to get the parts per billion (ppb) value
+###  Finally, the values are stored in spooler in sqlite database in memory.
+###  V0.0.2
 
 import multiprocessing as mp
 import datetime
@@ -10,17 +16,17 @@ import sys
 import sensors.persistence.spool as spool
 from sensors.common.logging import configure_logger
 from sensors.domain.observation import Observation
-import sensors.common.constants as CONSTANTS
+import sensors.raspi.constants as constants
 import RPi.GPIO as GPIO
 
 # Logical GPIO numbering schema
 GPIO.setmode(GPIO.BCM)
 
 # set up the SPI interface pins
-GPIO.setup(CONSTANTS.SPIMOSI, GPIO.OUT)
-GPIO.setup(CONSTANTS.SPIMISO, GPIO.IN)
-GPIO.setup(CONSTANTS.SPICLK, GPIO.OUT)
-GPIO.setup(CONSTANTS.SPICS, GPIO.OUT)
+GPIO.setup(constants.SPI_MOSI, GPIO.OUT)
+GPIO.setup(constants.SPI_MISO, GPIO.IN)
+GPIO.setup(constants.SPI_CLK, GPIO.OUT)
+GPIO.setup(constants.SPI_CS, GPIO.OUT)
 
 # Configure logging
 logger = configure_logger()
@@ -75,7 +81,7 @@ def readadc(adcnum, clockpin, mosipin, misopin, cspin):
 
 # Calculates voltage from Analog to Digital Converter in medium voltage (mV)
 def voltageADC(readadc):
-    voltage = int(round(((readadc * CONSTANTS.vref * 2) / CONSTANTS.resolution), 0)) + CONSTANTS.calibration
+    voltage = int(round(((readadc * constants.VREF * 2) / constants.RESOLUTION), 0)) + constants.CALIBRATION
     return voltage
 
 
@@ -93,7 +99,7 @@ def MQResistance(readadc, rl_value):
 
 # Calculates the sensor resistance of clean air from the MQ131 sensor
 def MQCalibration(rs):
-    Ro = rs * math.exp((math.log(CONSTANTS.pcCurve[0] / 0.010) / CONSTANTS.pcCurve[1]))
+    Ro = rs * math.exp((math.log(constants.PC_CURVE[0] / 0.010) / constants.PC_CURVE[1]))
     return Ro
 
 
@@ -104,7 +110,7 @@ def RsRoRatio(Rs, Ro):
 
 # Calculates the Parts Per Million (ppm) value
 def calculatePPM(RsRoRatio, Ro):
-    ppm = (CONSTANTS.pcCurve[0] * math.pow((RsRoRatio / Ro), CONSTANTS.pcCurve[1]))
+    ppm = (constants.PC_CURVE[0] * math.pow((RsRoRatio / Ro), constants.PC_CURVE[1]))
     return ppm
 
 
@@ -133,32 +139,32 @@ def generate_ozone_MQ131():
 
     # Analog to Digital Conversion from the MQ3002 chip to get voltage
     # Get 5 reading to get a stable value
-    o3SensorAnalogValue1 = readadc(adc_num, CONSTANTS.SPICLK, CONSTANTS.SPIMOSI, CONSTANTS.SPIMISO,
-                                   CONSTANTS.SPICS)
+    o3SensorAnalogValue1 = readadc(adc_num, constants.SPI_CLK, constants.SPI_MOSI, constants.SPI_MISO,
+                                   constants.SPI_CS)
     # print "The Analog to Digital value1 ",
     # print  o3SensorAnalogValue1, "\t",
     count += 1
     time.sleep(5)  # Every five seconds
-    o3SensorAnalogValue2 = readadc(adc_num, CONSTANTS.SPICLK, CONSTANTS.SPIMOSI, CONSTANTS.SPIMISO,
-                                   CONSTANTS.SPICS)
+    o3SensorAnalogValue2 = readadc(adc_num, constants.SPI_CLK, constants.SPI_MOSI, constants.SPI_MISO,
+                                   constants.SPI_CS)
     # print "The Analog to Digital value2 ",
     # print  o3SensorAnalogValue2, "\t",
     count += 1
     time.sleep(5)  # Every five seconds
-    o3SensorAnalogValue3 = readadc(adc_num, CONSTANTS.SPICLK, CONSTANTS.SPIMOSI, CONSTANTS.SPIMISO,
-                                   CONSTANTS.SPICS)
+    o3SensorAnalogValue3 = readadc(adc_num, constants.SPI_CLK, constants.SPI_MOSI, constants.SPI_MISO,
+                                   constants.SPI_CS)
     # print "The Analog to Digital value3 ",
     # print  o3SensorAnalogValue3, "\t",
     count += 1
     time.sleep(5)  # Every five seconds
-    o3SensorAnalogValue4 = readadc(adc_num, CONSTANTS.SPICLK, CONSTANTS.SPIMOSI, CONSTANTS.SPIMISO,
-                                   CONSTANTS.SPICS)
+    o3SensorAnalogValue4 = readadc(adc_num, constants.SPI_CLK, constants.SPI_MOSI, constants.SPI_MISO,
+                                   constants.SPI_CS)
     # print "The Analog to Digital value4 ",
     # print  o3SensorAnalogValue4, "\t",
     count += 1
     time.sleep(5)  # Every five seconds
-    o3SensorAnalogValue5 = readadc(adc_num, CONSTANTS.SPICLK, CONSTANTS.SPIMOSI, CONSTANTS.SPIMISO,
-                                   CONSTANTS.SPICS)
+    o3SensorAnalogValue5 = readadc(adc_num, constants.SPI_CLK, constants.SPI_MOSI, constants.SPI_MISO,
+                                   constants.SPI_CS)
     # print "The Analog to Digital value5 ",
     # print  o3SensorAnalogValue5, "\t",
     count += 1
@@ -174,7 +180,7 @@ def generate_ozone_MQ131():
     voltage = voltageADC(o3SensorAnalogValueAvg)
 
     # Get the Rs value (O3 concentrations of gases) from the average of the 5 readings
-    Rs = MQResistance(o3SensorAnalogValueAvg, CONSTANTS.RL_MQ131)
+    Rs = MQResistance(o3SensorAnalogValueAvg, constants.RL_MQ131)
 
     # Get the Ro (Clean Air) value from the average of the 5 readings
     Ro = MQCalibration(Rs)
@@ -225,8 +231,8 @@ def main():
 
             # Schedule event to run every minute
             logger.debug("Sampler: scheduling observation sampling...")
-            s.enter(CONSTANTS.SAMPLE_INTERVAL_ONE_MINUTE,
-                    CONSTANTS.SCHEDULE_PRIORITY_DEFAULT,
+            s.enter(constants.SAMPLE_INTERVAL_ONE_MINUTE,
+                    constants.SCHEDULE_PRIORITY_DEFAULT,
                     generate_observations_minute,
                     argument=(q,))
             # Run scheduled events
