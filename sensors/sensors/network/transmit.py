@@ -78,21 +78,21 @@ def jwt_authenticate(token=(None, None)):
     #   or (2) token_timestamp is later than or equal to the current time + AUTH_TTL
     token_timestamp = token[1]
     if token_timestamp is None:
-        print("Auth token is null, authenticating ...")
+        logger.debug("Transmitter: Auth token is null, authenticating ...")
         auth_required = True
     else:
         token_expired_after = token_timestamp + AUTH_TTL
         if datetime.datetime.utcnow() >= token_expired_after:
-            print("Auth token expired, re-authenticating ...")
+            logger.debug("Transmitter: Auth token expired, re-authenticating ...")
             auth_required = True
 
     if auth_required:
         json = AUTH_TEMPLATE.format(id=JWT_ID, key=JWT_KEY)
         headers = {'Content-Type': 'application/json'}
         r = session.post(URL_AUTH, headers=headers, data=json, verify=VERIFY_SSL)
-        print(("Auth status code was {0}".format(r.status_code)))
+        logger.debug(("Transmitter: Auth status code was {0}".format(r.status_code)))
         if r.status_code != 200:
-            print("ERROR: Authentication failed")
+            logger.debug("Transmitter: ERROR: Authentication failed")
             new_token = (None, None)
         else:
             new_token = (r.json()["token"], datetime.datetime.utcnow())
