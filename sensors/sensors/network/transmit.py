@@ -6,6 +6,7 @@ import os
 import io
 
 import requests
+from requests.exceptions import ConnectionError
 from requests_toolbelt.adapters import host_header_ssl
 
 from sensors.common.logging import configure_logger
@@ -172,7 +173,10 @@ def transmit(repo):
         headers = {'Content-Type': 'application/json',
                    'Authorization': "Bearer {token}".format(token=jwt_token[0])}
         logger.debug("Transmitter: Posting data to {0}...".format(URL))
-        r = session.post(URL, headers=headers, data=json, verify=VERIFY_SSL)
+        try:
+            r = session.post(URL, headers=headers, data=json, verify=VERIFY_SSL)
+        except ConnectionError as e:
+            raise TransmissionException("POST failed due to error: {0}".format(str(e)))
         logger.debug("Transmitter: Status code was {0}".format(r.status_code))
         if r.status_code != SUCCESS_STATUS_CODE:
             raise TransmissionException("Transmission failed with status code: {0}".format(r.status_code))
