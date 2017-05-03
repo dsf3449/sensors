@@ -90,11 +90,13 @@ def jwt_authenticate(token=(None, None)):
     if auth_required:
         json = AUTH_TEMPLATE.format(id=JWT_ID, key=JWT_KEY)
         headers = {'Content-Type': 'application/json'}
-        r = session.post(URL_AUTH, headers=headers, data=json, verify=VERIFY_SSL)
+        try:
+            r = session.post(URL_AUTH, headers=headers, data=json, verify=VERIFY_SSL)
+        except ConnectionError as e:
+            raise AuthenticationException("Unable to authenticate to {0} due to error: {1}".format(URL_AUTH, str(e)))
         logger.debug(("Transmitter: Auth status code was {0}".format(r.status_code)))
         if r.status_code != 200:
-            logger.debug("Transmitter: ERROR: Authentication failed")
-            new_token = (None, None)
+            raise AuthenticationException("Authentication failed with status code {0}".format(str(r.status_code)))
         else:
             new_token = (r.json()["token"], datetime.datetime.utcnow())
 
@@ -167,8 +169,6 @@ def transmit(repo):
         logger.debug("Transmitter: JSON payload: {0}".format(json))
         # POST observations
         jwt_token = jwt_authenticate(jwt_token)
-        if jwt_token[0] is None:
-            raise AuthenticationException()
 
         headers = {'Content-Type': 'application/json',
                    'Authorization': "Bearer {token}".format(token=jwt_token[0])}
@@ -222,8 +222,8 @@ def main():
             logger.debug("Transmitter: End of iteration.")
         except KeyboardInterrupt:
             break
-        except AuthenticationException:
-            logger.error("Transmitter: Error authenticating to {0}".format(URL_AUTH))
+        except AuthenticationException as ae:
+            logger.error("Transmitter: {0]".format(ae.message))
         except TransmissionException as te:
             logger.error("Transmitter: {0}".format(te.message))
         finally:
@@ -232,7 +232,8 @@ def main():
 
 
 class AuthenticationException(Exception):
-    pass
+    def __init__(self, message):
+        self.message = message
 
 
 class TransmissionException(Exception):
