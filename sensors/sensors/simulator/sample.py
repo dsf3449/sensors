@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import multiprocessing as mp
 import random
@@ -9,7 +10,8 @@ import sensors.persistence.spool as spool
 from sensors.common.logging import configure_logger
 from sensors.domain.observation import Observation
 
-SAMPLE_INTERVAL_ONE_MINUTE = 5
+
+SAMPLE_INTERVAL_ONE_MINUTE = 60
 SCHEDULE_PRIORITY_DEFAULT = 1
 
 
@@ -17,16 +19,30 @@ SCHEDULE_PRIORITY_DEFAULT = 1
 logger = configure_logger()
 
 
+next_date = None
+di = None
+
+
 def _rand():
     return random.uniform(1.23, 123.45)
 
 
+def _next_date():
+    global next_date
+    if next_date is None:
+        next_date = datetime.datetime.now().isoformat()
+        return next_date
+    next_date = next_date + di
+    return next_date
+
+
 def generate_observation(featureOfInterestId, datastreamId, phenomenonTime,
                          result, parameters):
+    logger.debug("generate_observation: {0}".format(phenomenonTime.isoformat()))
     o = Observation()
     o.featureOfInterestId = featureOfInterestId
     o.datastreamId = datastreamId
-    o.phenomenonTime = phenomenonTime
+    o.phenomenonTime = phenomenonTime.isoformat()
     o.result = result
     o.set_parameters(**parameters)
 
@@ -41,7 +57,7 @@ def generate_ozone_MQ131():
                   "Ro": str(_rand()),
                   "Rs_Ro_Ratio": str(_rand())}
     return generate_observation(foi_id, ds_id,
-                                datetime.datetime.now().isoformat(),
+                                _next_date(),
                                 str(_rand()), parameters)
 
 
@@ -53,7 +69,16 @@ def generate_observations_minute(queue):
     logger.debug("done")
 
 
-def main():
+def sample(start_date=datetime.datetime.now().isoformat(),
+           date_interval=datetime.timedelta(minutes=1)):
+    global next_date
+    global di
+
+    next_date = start_date
+    di = date_interval
+
+    logger.info("Start date: {0}, date interval: {1} minutes".format(str(next_date), str(di)))
+
     p = None
     try:
         # Start process to send data to
@@ -81,3 +106,23 @@ def main():
         if p:
             p.join()
         logger.info("Simulator: exiting.")
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Simulate a sensor')
+    parser.add_argument('-d', '--startdate', nargs=5, type=int,
+                        default=[2017, 1, 1, 0, 0],
+                        help='Start date for data: YYYY MM DD HH MM')
+    parser.add_argument('-i', '--dateint', type=int,
+                        default=1,
+                        help='Number of minutes between subsequent data')
+    args = parser.parse_args()
+
+    start_date = datetime.datetime(year=args.startdate[0], month=args.startdate[1], day=args.startdate[2],
+                                   hour=args.startdate[3], minute=args.startdate[4])
+    print("Start date: {0}".format(str(start_date)))
+
+    date_interval = datetime.timedelta(minutes=args.dateint)
+    print("Date interval: {0} minutes".format(str(date_interval)))
+
+    sample(start_date=start_date, date_interval=date_interval)

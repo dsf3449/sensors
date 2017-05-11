@@ -1,10 +1,12 @@
 import sched
 import time
+import sys
 import datetime
 import os
 import io
 
 import requests
+from requests.exceptions import ConnectionError
 from requests_toolbelt.adapters import host_header_ssl
 
 from sensors.common.logging import configure_logger
@@ -17,8 +19,16 @@ jwt_token = (None, None)
 session = None
 
 # Per-device ID and key.
-JWT_ID = os.environ.get('JWT_ID', "2694b9e1-ce59-4fd5-b95e-aa1c780e8158")
-JWT_KEY = os.environ.get('JWT_KEY', "ecacdce7-7374-408b-997b-5877bf9e37c3")
+JWT_ID = None
+JWT_KEY = None
+
+try:
+    JWT_ID = os.environ['JWT_ID']
+    JWT_KEY = os.environ['JWT_KEY']
+except KeyError:
+    mesg = "Environment variable JWT_ID or JWT_KEY not defined."
+    logger.error(mesg)
+    sys.exit(mesg)
 
 TRANSMIT_INTERVAL_SECONDS = 15
 SCHEDULE_PRIORITY_DEFAULT = 1
@@ -26,10 +36,17 @@ ERROR_RESPONSE = 'error'
 
 AUTH_TTL = datetime.timedelta(minutes=int(os.environ.get('CGIST_AUTH_TTL', "15")))
 
-URL = os.environ.get('CGIST_URL',
-                     'https://sensorthings.southcentralus.cloudapp.azure.com/device/api/v1.0/CreateObservations')
-URL_AUTH = os.environ.get('CGIST_AUTH_URL',
-                          'https://sensorthings.southcentralus.cloudapp.azure.com/device/api/auth/login')
+URL = None
+URL_AUTH =None
+
+try:
+    URL = os.environ['CGIST_URL']
+    URL_AUTH = os.environ['CGIST_AUTH_URL']
+except KeyError:
+    mesg = "Environment variable URL or URL_AUTH not defined."
+    logger.error(mesg)
+    sys.exit(mesg)
+
 # ONLY SET THIS IN DEVELOPMENT!!!
 VERIFY_SSL = not bool(os.environ.get('CGIST_IGNORE_SSL_ERRORS', False))
 
@@ -62,22 +79,24 @@ def jwt_authenticate(token=(None, None)):
     #   or (2) token_timestamp is later than or equal to the current time + AUTH_TTL
     token_timestamp = token[1]
     if token_timestamp is None:
-        print("Auth token is null, authenticating ...")
+        logger.debug("Transmitter: Auth token is null, authenticating ...")
         auth_required = True
     else:
         token_expired_after = token_timestamp + AUTH_TTL
         if datetime.datetime.utcnow() >= token_expired_after:
-            print("Auth token expired, re-authenticating ...")
+            logger.debug("Transmitter: Auth token expired, re-authenticating ...")
             auth_required = True
 
     if auth_required:
         json = AUTH_TEMPLATE.format(id=JWT_ID, key=JWT_KEY)
         headers = {'Content-Type': 'application/json'}
-        r = session.post(URL_AUTH, headers=headers, data=json, verify=VERIFY_SSL)
-        print(("Auth status code was {0}".format(r.status_code)))
+        try:
+            r = session.post(URL_AUTH, headers=headers, data=json, verify=VERIFY_SSL)
+        except ConnectionError as e:
+            raise AuthenticationException("Unable to authenticate to {0} due to error: {1}".format(URL_AUTH, str(e)))
+        logger.debug(("Transmitter: Auth status code was {0}".format(r.status_code)))
         if r.status_code != 200:
-            print("ERROR: Authentication failed")
-            new_token = (None, None)
+            raise AuthenticationException("Authentication failed with status code {0}".format(str(r.status_code)))
         else:
             new_token = (r.json()["token"], datetime.datetime.utcnow())
 
@@ -150,13 +169,14 @@ def transmit(repo):
         logger.debug("Transmitter: JSON payload: {0}".format(json))
         # POST observations
         jwt_token = jwt_authenticate(jwt_token)
-        if jwt_token[0] is None:
-            raise AuthenticationException()
 
         headers = {'Content-Type': 'application/json',
                    'Authorization': "Bearer {token}".format(token=jwt_token[0])}
         logger.debug("Transmitter: Posting data to {0}...".format(URL))
-        r = session.post(URL, headers=headers, data=json, verify=VERIFY_SSL)
+        try:
+            r = session.post(URL, headers=headers, data=json, verify=VERIFY_SSL)
+        except ConnectionError as e:
+            raise TransmissionException("POST failed due to error: {0}".format(str(e)))
         logger.debug("Transmitter: Status code was {0}".format(r.status_code))
         if r.status_code != SUCCESS_STATUS_CODE:
             raise TransmissionException("Transmission failed with status code: {0}".format(r.status_code))
@@ -202,8 +222,8 @@ def main():
             logger.debug("Transmitter: End of iteration.")
         except KeyboardInterrupt:
             break
-        except AuthenticationException:
-            logger.error("Transmitter: Error authenticating to {0}".format(URL_AUTH))
+        except AuthenticationException as ae:
+            logger.error("Transmitter: {0]".format(ae.message))
         except TransmissionException as te:
             logger.error("Transmitter: {0}".format(te.message))
         finally:
@@ -212,7 +232,8 @@ def main():
 
 
 class AuthenticationException(Exception):
-    pass
+    def __init__(self, message):
+        self.message = message
 
 
 class TransmissionException(Exception):
