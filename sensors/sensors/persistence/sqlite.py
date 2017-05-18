@@ -22,7 +22,7 @@ class SqliteRepository:
                       "(featureOfInterestId, datastreamId, phenomenonTime, result, parameters) "
                       "VALUES (?, ?, ?, ?, ?)"
                       )
-    SQL_GET_OBS = 'SELECT * FROM observation WHERE status="PENDING"'
+    SQL_GET_OBS = 'SELECT * FROM observation WHERE status="PENDING" LIMIT ?'
     SQL_GET_ALL_OBS = 'SELECT * FROM observation'
     SQL_DELETE_OBS = "DELETE FROM observation WHERE id IN ({0})"
     SQL_UPDATE_STATUS = 'UPDATE observation SET status="{0}" WHERE id IN ({1})'
@@ -52,11 +52,11 @@ class SqliteRepository:
         self._perform_action_with_connection(lambda c: c.execute(SqliteRepository.SQL_CREATE_OBS,
                                                                  observation))
 
-    def get_observations(self):
+    def get_observations(self, limit="360"):
         observations = []
 
         with sqlite3.connect(constants.DB_PATH) as conn:
-            for r in conn.execute(SqliteRepository.SQL_GET_OBS):
+            for r in conn.execute(SqliteRepository.SQL_GET_OBS, (limit,)):
                 o = Observation()
                 o.id = r[0]
                 o.featureOfInterestId = r[1]
