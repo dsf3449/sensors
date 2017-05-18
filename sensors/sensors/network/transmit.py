@@ -64,7 +64,7 @@ JSON_DATASTREAM = ('{{"Datastream":{{"@iot.id":"{datastreamId}"}},'
 
 JSON_DATA_ARRAY_ELEM = ('['
                         '"{phenomenonTime}",'
-                        '"{result}",'
+                        '{result},'
                         '"{featureOfInterestId}",'
                         '{{{parameters}}}'
                         ']')
