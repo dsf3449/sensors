@@ -1,5 +1,9 @@
+import datetime
+import time
+
 import RPi.GPIO as GPIO
-import DHT11_Python.dht11 as dht11
+
+import sensors.sensors.raspi.dht11 as dht11
 
 # initialize GPIO
 GPIO.setwarnings(False)
@@ -11,9 +15,12 @@ instance = dht11.DHT11(pin=17)
 result = instance.read()
 
 if result.is_valid():
-    print("Temperature: %d C" % result.temperature)
+    print("Last valid input: " + str(datetime.datetime.now()))
+    print ("Temperature: %d C" % result.temperature)
     print ("Temperature: %d F" % result.temperature * 1.8 + 32)
     print("Humidity: %d %%" % result.humidity)
 else:
     print("Error: %d" % result.error_code)
+
+time.sleep(1)
 

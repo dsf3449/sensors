@@ -25,7 +25,7 @@ def main():
     signal.signal(signal.SIGINT, SIGINTHandler)
 
     # update once every 2 seconds and output data
-    while (True):
+    while True:
         sensor.update()
 
         print("PM 1  :", end=' ')
