@@ -1,47 +1,56 @@
-from __future__ import print_function
+# -*- coding: utf-8 -*-
+'''import serial
 import time
-import sys
-import signal
-import atexit
-from upm import pyupm_hka5 as sensorObj
 
-def main():
-    # Instantiate a HKA5 sensor on uart 0.  We don't use the set or
-    # reset pins, so we pass -1 for them.
-    sensor = sensorObj.HKA5(0, -1, -1)
 
-    ## Exit handlers ##
-    # This function stops python from printing a stacktrace when you hit control-C
-    def SIGINTHandler(signum, frame):
-        raise SystemExit
+def hexShow(argv):
+    result = ''
+    hLen = len(argv)
+    for i in range(hLen):
+        hvol = argv[i]
+        hhex = '%02x' % hvol
+        result += hhex + ' '
+    print ('hexShow:', result)
 
-    # This function lets you run code on exit
-    def exitHandler():
-        print("Exiting")
-        sys.exit(0)
 
-    # Register exit handlers
-    atexit.register(exitHandler)
-    signal.signal(signal.SIGINT, SIGINTHandler)
+t = serial.Serial('/dev/serial0', 9600)
+t.setTimeout(1.5)
+while True:
+    t.flushInput()
+    time.sleep(0.5)
+    retstr = t.read(10)
+    hexShow(retstr)
+    if len(retstr) == 10:
+        if (retstr[0] == 0xaa and retstr[1] == 0xc0):
+            checksum = 0
+            for i in range(6):
+                checksum = checksum + int(retstr[2 + i])
+            if checksum % 256 == retstr[8]:
+                pm25 = int(retstr[2]) + int(retstr[3]) * 256
+                # pm10=int(retstr[4])+int(retstr[5])*256
+                print ("pm2.5:%.1f μg/m3" % (pm25 / 10.0))'''
 
-    # update once every 2 seconds and output data
+import serial
+import time
+
+
+def readlineCR(port):
+    rv = ""
     while True:
-        sensor.update()
+        ch = port.read()
+        rv += ch
+        if ch == '\r' or ch == chr(66) or ch == '':
+            return rv
 
-        print("PM 1  :", end=' ')
-        print(sensor.getPM1(), end=' ')
-        print(" ug/m3")
 
-        print("PM 2.5:", end=' ')
-        print(sensor.getPM2_5(), end=' ')
-        print(" ug/m3")
+port = serial.Serial("/dev/serial0", baudrate = 9600, timeout = 2)
 
-        print("PM 10 :", end=' ')
-        print(sensor.getPM10(), end=' ')
-        print(" ug/m3")
+while True:
+     rcv = readlineCR(port)
+     port.write("I typed: " + repr(rcv))
+     print(rcv)
 
-        print()
-        time.sleep(2)
 
-if __name__ == '__main__':
-    main()
+
+
+

@@ -1,6 +1,6 @@
 ###  CGI Digital Services - LEaRN
 ###  March 2017
-###  Application to read O3 Senser (MQ315) from the Raspberry Pi 3 Rev. B
+###  Application to read O3 Senser (MQ131) from the Raspberry Pi 3 Rev. B
 ###  Converts the analog value to digital value with the MCP3002 chip
 ###  Once we have that value, it will convert it to an equation to get the parts per billion (ppb) value
 ###  Finally, the values are stored in spooler in sqlite database in memory.
@@ -27,6 +27,8 @@ GPIO.setup(constants.SPI_MOSI, GPIO.OUT)
 GPIO.setup(constants.SPI_MISO, GPIO.IN)
 GPIO.setup(constants.SPI_CLK, GPIO.OUT)
 GPIO.setup(constants.SPI_CS, GPIO.OUT)
+
+MQ_Sample_Time = 5
 
 # Configure logging
 logger = configure_logger()
@@ -90,7 +92,7 @@ def voltageADC(readadc):
 #    vrl = adc * 5 / 4096.0
 #    return vrl
 
-# Calculates the sensor resistance (Rs)
+# Calculates the sensor resistance
 def MQResistance(readadc, rl_value):
     return (1024 * 1000 * rl_value) / (readadc - rl_value)
     # Rs = (22000 * (5 - vrl)) / vrl
@@ -133,47 +135,19 @@ def generate_observation(featureOfInterestId, datastreamId, phenomenonTime,
 
 def generate_ozone_MQ131():
     adc_num = 0  # Reads from channel 0
-    count = 0
+    o3SensorAnalogValueAvg = 0.0
     foi_id = os.environ["CGIST_FOI_ID"]
     ds_id = os.environ["CGIST_DS_ID_MQ131"]
 
     # Analog to Digital Conversion from the MQ3002 chip to get voltage
     # Get 5 reading to get a stable value
-    o3SensorAnalogValue1 = readadc(adc_num, constants.SPI_CLK, constants.SPI_MOSI, constants.SPI_MISO,
-                                   constants.SPI_CS)
-    # print "The Analog to Digital value1 ",
-    # print  o3SensorAnalogValue1, "\t",
-    count += 1
-    time.sleep(5)  # Every five seconds
-    o3SensorAnalogValue2 = readadc(adc_num, constants.SPI_CLK, constants.SPI_MOSI, constants.SPI_MISO,
-                                   constants.SPI_CS)
-    # print "The Analog to Digital value2 ",
-    # print  o3SensorAnalogValue2, "\t",
-    count += 1
-    time.sleep(5)  # Every five seconds
-    o3SensorAnalogValue3 = readadc(adc_num, constants.SPI_CLK, constants.SPI_MOSI, constants.SPI_MISO,
-                                   constants.SPI_CS)
-    # print "The Analog to Digital value3 ",
-    # print  o3SensorAnalogValue3, "\t",
-    count += 1
-    time.sleep(5)  # Every five seconds
-    o3SensorAnalogValue4 = readadc(adc_num, constants.SPI_CLK, constants.SPI_MOSI, constants.SPI_MISO,
-                                   constants.SPI_CS)
-    # print "The Analog to Digital value4 ",
-    # print  o3SensorAnalogValue4, "\t",
-    count += 1
-    time.sleep(5)  # Every five seconds
-    o3SensorAnalogValue5 = readadc(adc_num, constants.SPI_CLK, constants.SPI_MOSI, constants.SPI_MISO,
-                                   constants.SPI_CS)
-    # print "The Analog to Digital value5 ",
-    # print  o3SensorAnalogValue5, "\t",
-    count += 1
+    for i in range(0, MQ_Sample_Time):
+        o3SensorAnalogValueAvg += readadc(adc_num, constants.SPI_CLK, constants.SPI_MOSI, constants.SPI_MISO,
+                                          constants.SPI_CS)
+        time.sleep(5)  # Every five seconds
+    o3SensorAnalogValueAvg = o3SensorAnalogValueAvg / MQ_Sample_Time
 
-    # Average reading
-    o3SensorAnalogValueAvg = (o3SensorAnalogValue1 + o3SensorAnalogValue2 + o3SensorAnalogValue3 + o3SensorAnalogValue4
-                              + o3SensorAnalogValue5) / count
     logger.debug("The Analog to Digital value avg: " + str(o3SensorAnalogValueAvg))
-    count = 0  # reset counter
 
     # Voltage from average reading
     voltage = voltageADC(o3SensorAnalogValueAvg)
