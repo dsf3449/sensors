@@ -15,8 +15,13 @@ import os
 import sys
 import sensors.persistence.spool as spool
 from sensors.common.logging import configure_logger
+from sensors.sensors.raspi.mq131_ozone_future import ADCSPI_MQ131
+from sensors.sensors.raspi.aeroqual_sensor import ADCSPI_AEROQUAL_SM50
+import sensors.sensors.raspi.dht11 as dht11
+import sensors.sensors.raspi.opc as opc
 from sensors.domain.observation import Observation
 import sensors.raspi.constants as constants
+import spidev
 import RPi.GPIO as GPIO
 
 # Logical GPIO numbering schema
@@ -44,83 +49,6 @@ except KeyError:
     sys.exit(mesg)
 
 
-# read SPI data from MCP3002 chip, 2 possible adc's (0 thru 1)
-def readadc(adcnum, clockpin, mosipin, misopin, cspin):
-    if ((adcnum > 1) or (adcnum < 0)):
-        return -1
-    GPIO.output(cspin, True)
-
-    GPIO.output(clockpin, False)  # start clock low
-    GPIO.output(cspin, False)  # bring CS low
-
-    commandout = adcnum << 1
-    commandout |= 0x0D  # start bit + single-ended bit + MSBF bit
-    commandout <<= 4  # we only need to send 4 bits here
-
-    for i in range(4):
-        if (commandout & 0x80):
-            GPIO.output(mosipin, True)
-        else:
-            GPIO.output(mosipin, False)
-        commandout <<= 1
-        GPIO.output(clockpin, True)
-        GPIO.output(clockpin, False)
-
-    adcout = 0
-
-    # read in one null bit and 10 ADC bits
-    for i in range(11):
-        GPIO.output(clockpin, True)
-        GPIO.output(clockpin, False)
-        adcout <<= 1
-        if (GPIO.input(misopin)):
-            adcout |= 0x1
-    GPIO.output(cspin, True)
-
-    adcout /= 2  # first bit is 'null' so drop it
-    return adcout
-
-
-# Calculates voltage from Analog to Digital Converter in medium voltage (mV)
-def voltageADC(readadc):
-    voltage = int(round(((readadc * constants.VREF * 2) / constants.RESOLUTION), 0)) + constants.CALIBRATION
-    return voltage
-
-
-# Calculates vrl for resistance of sensor equation
-# def vrl(adc):
-#    vrl = adc * 5 / 4096.0
-#    return vrl
-
-# Calculates the sensor resistance
-def MQResistance(readadc, rl_value):
-    return (1024 * 1000 * rl_value) / (readadc - rl_value)
-    # Rs = (22000 * (5 - vrl)) / vrl
-    # return Rs
-
-
-# Calculates the sensor resistance of clean air from the MQ131 sensor
-def MQCalibration(rs):
-    Ro = rs * math.exp((math.log(constants.PC_CURVE[0] / 0.010) / constants.PC_CURVE[1]))
-    return Ro
-
-
-# Calculates the ratio of Rs and Ro from a sensor
-def RsRoRatio(Rs, Ro):
-    return (Rs / Ro)
-
-
-# Calculates the Parts Per Million (ppm) value
-def calculatePPM(RsRoRatio, Ro):
-    ppm = (constants.PC_CURVE[0] * math.pow((RsRoRatio / Ro), constants.PC_CURVE[1]))
-    return ppm
-
-
-# Converts the Parts Per Million (ppm) value to Parts Per Billion (ppb)
-def convertPPMToPPB(ppm):
-    return ppm * 1000
-
-
 def generate_observation(featureOfInterestId, datastreamId, phenomenonTime,
                          result, parameters):
     o = Observation()
@@ -134,40 +62,36 @@ def generate_observation(featureOfInterestId, datastreamId, phenomenonTime,
 
 
 def generate_ozone_MQ131():
-    adc_num = 0  # Reads from channel 0
-    o3SensorAnalogValueAvg = 0.0
     foi_id = os.environ["CGIST_FOI_ID"]
     ds_id = os.environ["CGIST_DS_ID_MQ131"]
+    adcspi_mq131 = ADCSPI_MQ131()
 
-    # Analog to Digital Conversion from the MQ3002 chip to get voltage
-    # Get 5 reading to get a stable value
-    for i in range(0, MQ_Sample_Time):
-        o3SensorAnalogValueAvg += readadc(adc_num, constants.SPI_CLK, constants.SPI_MOSI, constants.SPI_MISO,
-                                          constants.SPI_CS)
-        time.sleep(5)  # Every five seconds
-    o3SensorAnalogValueAvg = o3SensorAnalogValueAvg / MQ_Sample_Time
+    adcspi_mq131.readadc()
+    o3SensorAnalogValueAvg = adcspi_mq131.adc_average()
 
     logger.debug("The Analog to Digital value avg: " + str(o3SensorAnalogValueAvg))
 
     # Voltage from average reading
-    voltage = voltageADC(o3SensorAnalogValueAvg)
+    voltage = adcspi_mq131.voltageADC()
+
+    adcspi_mq131.MQResistance()
 
     # Get the Rs value (O3 concentrations of gases) from the average of the 5 readings
-    Rs = MQResistance(o3SensorAnalogValueAvg, constants.RL_MQ131)
+    Rs = adcspi_mq131.measure_Rs()
 
     # Get the Ro (Clean Air) value from the average of the 5 readings
-    Ro = MQCalibration(Rs)
+    Ro = adcspi_mq131.measure_Ro()
 
     # Get Ratio from the Rs and Ro values
-    Rs_Ro_Ratio = RsRoRatio(Rs, Ro)
+    Rs_Ro_Ratio = adcspi_mq131.measure_ratio()
 
     # Get the ppm value from the average of the 5 readings
-    ppm = calculatePPM(Rs_Ro_Ratio, Ro)
+    adcspi_mq131.calculate_ppm_O3()
 
     # Convert the ppm value to ppb value
-    ppb = convertPPMToPPB(ppm)
+    ppb = adcspi_mq131.convertPPMToPPB()
 
-    logger.debug("The PPB: " + str(Ro))
+    logger.debug("The PPB: " + str(ppb['o3']))
 
     parameters = {"voltage": str(voltage),
                   "Rs": str(Rs),
@@ -177,6 +101,53 @@ def generate_ozone_MQ131():
     return generate_observation(foi_id, ds_id,
                                 datetime.datetime.now().isoformat(),
                                 str(ppb), parameters)
+
+
+def generate_ozone_aeroqual():
+    foi_id = os.environ["CGIST_FOI_ID"]
+    ds_id = os.environ["CGIST_DS_ID_MQ131"] # Will be different datastream
+    adcspi_aeroqual = ADCSPI_AEROQUAL_SM50()
+
+    adcspi_aeroqual.readadc()
+    aeroqualSensorAnalogValueAvg = adcspi_aeroqual.readadc()
+
+    logger.debug("The Analog to Digital value avg: " + str(aeroqualSensorAnalogValueAvg))
+
+    voltage = adcspi_aeroqual.voltageADC()
+
+    ppb = adcspi_aeroqual.convertADCToPPB()
+
+    logger.debug("The PPB: " + str(ppb['aeroqual']))
+
+    parameters = {"voltage": str(voltage)}
+
+    return generate_observation(foi_id, ds_id,
+                                datetime.datetime.now().isoformat(),
+                                str(ppb), parameters)
+
+def generate_temp_humdity():
+    foi_id = os.environ["CGIST_FOI_ID"]
+    ds_id = os.environ["CGIST_DS_ID_MQ131"]  # Will be different datastream
+
+    # read data using pin 14
+    instance = dht11.DHT11(pin=17)
+    result = instance.read()
+
+    if result.is_valid():
+        parameters = {"Temperature C": str(result.temperature),
+                      "Temperature F": str(result.temperature * 1.8 + 32),
+                      "Humidity": str(result.humidity)}
+
+        logger.debug("Last valid input: " + str(datetime.datetime.now()))
+        logger.debug("Temperature: %d C" % result.temperature)
+        logger.debug("Temperature: %d F" % result.temperature * 1.8 + 32)
+        logger.debug("Humidity: %d %%" % result.humidity)
+
+        return generate_observation(foi_id, ds_id,
+                                    datetime.datetime.now().isoformat(),
+                                    parameters)
+    else:
+        logger.debug("Error: %d" % result.error_code)
 
 
 def generate_observations_minute(queue):

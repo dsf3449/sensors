@@ -14,8 +14,6 @@ GPIO.setup(constants.SPI_MISO, GPIO.IN)
 GPIO.setup(constants.SPI_CLK, GPIO.OUT)
 GPIO.setup(constants.SPI_CS, GPIO.OUT)
 
-MQ_Sample_Time = 5
-
 class ADCSPI_MQ131():
     # read SPI data from MCP3002 chip, 2 possible adc's (0 thru 1)
     def readadc(self):
@@ -58,39 +56,35 @@ class ADCSPI_MQ131():
         adcout /= 2  # first bit is 'null' so drop it
         return adcout
 
+    # Calculates voltage from Analog to Digital Converter in medium voltage (mV)
+    def voltageADC(self):
+        voltage = int(round(((self.adc_average() * constants.VREF * 2) / constants.RESOLUTION), 0)) + constants.CALIBRATION
+        return voltage
 
-    def MQResistance(self):
-        """Calculates the sensor resistance"""
-        o3SensorAnalogValueAvg = 0.0
+    def adc_average(self):
         # Analog to Digital Conversion from the MQ3002 chip to get voltage
         # Get 5 reading to get a stable value
-        for i in range(0, MQ_Sample_Time):
-            o3SensorAnalogValueAvg += self.readadc()
-            time.sleep(5)  # Every five seconds
-        o3SensorAnalogValueAvg = o3SensorAnalogValueAvg / MQ_Sample_Time
-        self.rsAir = (1024 * 1000 * constants.RL_MQ131) / (o3SensorAnalogValueAvg - constants.RL_MQ131)
+        AnalogToDigitalValueAvg = 0.0
+        for i in range(0, constants.READ_SAMPLE_VALUES):
+            AnalogToDigitalValueAvg += self.readadc()
+            time.sleep(constants.READ_SAMPLE_TIME)  # Every five seconds
+            AnalogToDigitalValueAvg = AnalogToDigitalValueAvg / constants.READ_SAMPLE_VALUES
+        return AnalogToDigitalValueAvg
+
+
+    def MQResistance(self):
+        """Calculates the sensor resistance (Rs)"""
+        self.rsAir = (1024 * 1000 * constants.RL_MQ131) / (self.adc_average() - constants.RL_MQ131)
 
     def measure_Ro(self):
         """Calculates the sensor resistance of clean air from the MQ131 sensor"""
-        val = 0.0
-        for i in range(0, MQ_Sample_Time):
-            val += self.rsAir
-            time.sleep(0.5)
-        Measure_Ro = val / MQ_Sample_Time
-        Ro = Measure_Ro * math.exp((math.log(constants.PC_CURVE[0] / 0.010) / constants.PC_CURVE[1]))
+        Ro = self.rsAir * math.exp((math.log(constants.PC_CURVE[0] / 0.010) / constants.PC_CURVE[1]))
         return Ro
 
-    def measure_Rs(self):
-        Measure_Rs = 0.0
-        for i in range(0, MQ_Sample_Time):
-            Measure_Rs += self.rsAir
-            time.sleep(0.1)
-        Measure_Rs = Measure_Rs / MQ_Sample_Time
-        return Measure_Rs
-
     def measure_ratio(self):
-        self.ratio = self.measure_Rs() / self.measure_Ro()
-        # print "Ratio = %.3f " % self.ratio
+        """Calculates the ratio of Rs and Ro from a sensor"""
+        self.ratio = self.MQResistance() / self.measure_Ro()
+
 
     def calculate_ppm_O3(self):
         """Calculate the final concentration value"""
@@ -103,19 +97,27 @@ class ADCSPI_MQ131():
         return {'o3' : ppb}
 
 
-from mq131_ozone import ADCSPI_MQ131
+from mq131_ozone_future import ADCSPI_MQ131
 
 adcspi_mq131 = ADCSPI_MQ131()
 
-while True:
-    adcspi_mq131.readadc()
-    adcspi_mq131.MQResistance()
-    adcspi_mq131.measure_Rs()
-    adcspi_mq131.measure_Ro()
-    adcspi_mq131.measure_ratio()
-    adcspi_mq131.calculate_ppm_O3()
-    data = adcspi_mq131.convertPPMToPPB()
-    print "Ozone Concentration : %.3f ppb" % (data['o3'])
-    print " ********************************* "
-    time.sleep(1)
+def main():
+    try:
+        print ("MQ131 Sensor Data")
+        while True:
+            adcspi_mq131.readadc()
+            adcspi_mq131.voltageADC()
+            adcspi_mq131.MQResistance()
+            adcspi_mq131.measure_Rs()
+            adcspi_mq131.measure_Ro()
+            adcspi_mq131.measure_ratio()
+            adcspi_mq131.calculate_ppm_O3()
+            data = adcspi_mq131.convertPPMToPPB()
+            print "Ozone Concentration : %.3f ppb" % (data['o3'])
+            print " ********************************* "
+            time.sleep(1)
+    except KeyboardInterrupt:
+        GPIO.cleanup()
+
+if __name__ == "__main__": main()
 

@@ -30,6 +30,6 @@ try:
         sleep(15)
 
 except KeyboardInterrupt:
-    #Turn the opc OFF
+    # Turn the opc OFF
     alpha.off()
 

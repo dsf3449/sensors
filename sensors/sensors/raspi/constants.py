@@ -12,7 +12,7 @@ CALIBRATION = 38    # in mV, to make up for the precision of the components
 PC_CURVE = [42.84561841, -1.043297135]   # MQ131 O3 coordinates on curve
 RL_MQ131 = 0.679                         # MQ131 Sainsmart Resistor Load value
 READ_SAMPLE_VALUES = 5                   # Number of samples to read to get average
-READ_SAMPLE_TIME = 0.5                   # Reads sample data in milliseconds
+READ_SAMPLE_TIME = 0.1                   # Reads sample data in milliseconds
 
 SAMPLE_INTERVAL_ONE_MINUTE = 60
 SCHEDULE_PRIORITY_DEFAULT = 1
