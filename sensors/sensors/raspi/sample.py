@@ -18,11 +18,15 @@ from sensors.common.logging import configure_logger
 from sensors.sensors.raspi.mq131_ozone_future import ADCSPI_MQ131
 from sensors.sensors.raspi.aeroqual_sensor import ADCSPI_AEROQUAL_SM50
 import sensors.sensors.raspi.dht11 as dht11
+from sensors.sensors.raspi.pm_sample import readlineCR
 import sensors.sensors.raspi.opc as opc
 from sensors.domain.observation import Observation
 import sensors.raspi.constants as constants
+import serial
 import spidev
 import RPi.GPIO as GPIO
+
+"""MQ131 and aeroqual sensor initialization"""
 
 # Logical GPIO numbering schema
 GPIO.setmode(GPIO.BCM)
@@ -32,6 +36,28 @@ GPIO.setup(constants.SPI_MOSI, GPIO.OUT)
 GPIO.setup(constants.SPI_MISO, GPIO.IN)
 GPIO.setup(constants.SPI_CLK, GPIO.OUT)
 GPIO.setup(constants.SPI_CS, GPIO.OUT)
+
+"""End of MQ131 and aeroqual sensor initialization"""
+
+"""DFRobot PM sensor initializtion"""
+
+port = serial.Serial("/dev/serial0", baudrate=9600, timeout=2)
+
+"""End of DFRobot PM sensor initializtion"""
+
+"""Alphasense OPC-N2 PM sensor initialization"""
+
+# Open a SPI connection on CE0
+spi = spidev.SpiDev()
+spi.open(0, 0)
+
+# Set the SPI mode and clock speed
+spi.mode = 1
+spi.max_speed_hz = 500000
+
+alpha = opc.OPCN2(spi)
+
+"""End of Alphasense OPC-N2 PM sensor initialization"""
 
 MQ_Sample_Time = 5
 
@@ -150,6 +176,36 @@ def generate_temp_humdity():
         logger.debug("Error: %d" % result.error_code)
 
 
+def generate_pm_dfrobot():
+    pm_info = readlineCR(port)
+    parameters = {};
+
+    if pm_info.valid:
+        logger.debug(pm_info.pm10, pm_info.pm25, pm_info.pm100)
+        parameters = {"pm10": pm_info.pm10,
+                      "pm25": pm_info.pm25,
+                      "pm100": pm_info.pm100}
+    else:
+        logger.debug("PM data not available at this time.")
+
+    return parameters
+
+def generate_pm_opcn2():
+    # Turn on the OPC
+    alpha.on()
+    parameters = {}
+    # Read the PM data
+    print ("OPC PM Data")
+    logger.debug("OPC PM Data")
+    for key, value in alpha.pm().items():
+        logger.debug("Key: {}\tValue: {}".format(key, value))
+        parameters = {
+            key, value
+        }
+
+    return parameters
+
+
 def generate_observations_minute(queue):
     logger.debug("Generating O3 observation...")
     o = generate_ozone_MQ131()
@@ -185,6 +241,8 @@ def main():
 
     except KeyboardInterrupt:
         GPIO.cleanup()
+        # Turn the opc OFF
+        alpha.off()
     finally:
         if p:
             p.join()
