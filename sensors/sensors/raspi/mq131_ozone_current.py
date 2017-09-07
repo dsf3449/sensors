@@ -14,7 +14,7 @@ GPIO.setup(constants.SPI_MISO, GPIO.IN)
 GPIO.setup(constants.SPI_CLK, GPIO.OUT)
 GPIO.setup(constants.SPI_CS, GPIO.OUT)
 
-class ADCSPI_MQ131():
+class ADCSPI_MQ131_CURRENT():
     # read SPI data from MCP3002 chip, 2 possible adc's (0 thru 1)
     def readadc(self):
         adcnum = 0
@@ -83,7 +83,7 @@ class ADCSPI_MQ131():
 
     def measure_ratio(self):
         """Calculates the ratio of Rs and Ro from a sensor"""
-        self.ratio = self.MQResistance() / self.measure_Ro()
+        self.ratio = self.rsAir / self.measure_Ro()
 
 
     def calculate_ppm_O3(self):
@@ -97,25 +97,25 @@ class ADCSPI_MQ131():
         return {'o3' : ppb}
 
 
-from mq131_ozone_future import ADCSPI_MQ131
+from mq131_ozone_current import ADCSPI_MQ131_CURRENT
 
-adcspi_mq131 = ADCSPI_MQ131()
+adcspi_mq131 = ADCSPI_MQ131_CURRENT()
 
 def main():
     try:
         print ("MQ131 Sensor Data")
         while True:
             adcspi_mq131.readadc()
+            adcspi_mq131.adc_average()
             adcspi_mq131.voltageADC()
             adcspi_mq131.MQResistance()
-            adcspi_mq131.measure_Rs()
             adcspi_mq131.measure_Ro()
             adcspi_mq131.measure_ratio()
             adcspi_mq131.calculate_ppm_O3()
             data = adcspi_mq131.convertPPMToPPB()
             print "Ozone Concentration : %.3f ppb" % (data['o3'])
             print " ********************************* "
-            time.sleep(1)
+            time.sleep(5)
     except KeyboardInterrupt:
         GPIO.cleanup()
 

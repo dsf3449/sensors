@@ -182,9 +182,9 @@ def generate_pm_dfrobot():
 
     if pm_info.valid:
         logger.debug(pm_info.pm10, pm_info.pm25, pm_info.pm100)
-        parameters = {"pm10": pm_info.pm10,
-                      "pm25": pm_info.pm25,
-                      "pm100": pm_info.pm100}
+        parameters = {"pm1.0": pm_info.pm10,
+                      "pm2.5": pm_info.pm25,
+                      "pm10.0": pm_info.pm100}
     else:
         logger.debug("PM data not available at this time.")
 
@@ -193,24 +193,25 @@ def generate_pm_dfrobot():
 def generate_pm_opcn2():
     # Turn on the OPC
     alpha.on()
-    parameters = {}
     # Read the PM data
     print ("OPC PM Data")
     logger.debug("OPC PM Data")
     for key, value in alpha.pm().items():
         logger.debug("Key: {}\tValue: {}".format(key, value))
-        parameters = {
-            key, value
-        }
 
-    return parameters
+    # Returns dictionary of PM values
+    return alpha.pm()
 
 
 def generate_observations_minute(queue):
     logger.debug("Generating O3 observation...")
-    o = generate_ozone_MQ131()
-    logger.debug("Queuing observation {0}...".format(str(o)))
-    queue.put(o)
+    o_one = generate_ozone_MQ131()
+    logger.debug("Queuing observation {0}...".format(str(o_one)))
+    queue.put(o_one)
+    #logger.debug("Generating aeroqual ozone observation...")
+    #o_two = generate_ozone_aeroqual()
+    #logger.debug("Queing observation {0}...".format(str(o_two)))
+    #queue.put(o_two)
 
 
 def main():

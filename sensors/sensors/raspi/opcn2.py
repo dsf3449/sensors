@@ -15,10 +15,9 @@ spi.max_speed_hz = 500000
 alpha = opc.OPCN2(spi)
 
 try:
+    # Read the information string
+    print (alpha.read_info_string())
     while True:
-        # Read the information string
-        print (alpha.read_info_string())
-
         # Turn on the OPC
         alpha.on()
 
