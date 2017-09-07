@@ -113,8 +113,8 @@ def main():
             adcspi_mq131.measure_ratio()
             adcspi_mq131.calculate_ppm_O3()
             data = adcspi_mq131.convertPPMToPPB()
-            print "Ozone Concentration : %.3f ppb" % (data['o3'])
-            print " ********************************* "
+            print ("Ozone Concentration : %.3f ppb" % (data['o3']))
+            print (" ********************************* ")
             time.sleep(5)
     except KeyboardInterrupt:
         GPIO.cleanup()

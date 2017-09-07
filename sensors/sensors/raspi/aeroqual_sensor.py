@@ -91,8 +91,8 @@ def main():
             adcspi_aeroqual.adc_average()
             adcspi_aeroqual.voltageADC()
             data = adcspi_aeroqual.convertADCToPPB()
-            print "Ozone Concentration : %.3f ppb" % (data['aeroqual'])
-            print " ********************************* "
+            print ("Ozone Concentration : %.3f ppb" % (data['aeroqual']))
+            print (" ********************************* ")
             time.sleep(1)
     except KeyboardInterrupt:
         GPIO.cleanup()

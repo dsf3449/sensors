@@ -29,8 +29,8 @@ def readlineCRtest(port):
     for i in range(256):
         for j in range(256):
             if i * 256 + j != ConcatBytes(i, j):
-                print i, j, i * 256 + j, ConcatBytes(i, j)
-        print i
+                print (i, j, i * 256 + j, ConcatBytes(i, j))
+        print (i)
 
 
 def readlineCR(port):
