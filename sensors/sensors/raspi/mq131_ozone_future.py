@@ -109,9 +109,9 @@ class ADCSPI_MQ131():
     def convertPPMToPPB(self):
         """Converts the Parts Per Million (ppm) value to Parts Per Billion (ppb)"""
         ppb = self.calculate_ppm_O3() * 1000
-        return {'o3': ppb}
+        return ppb
 
-
+"""
 from mq131_ozone_future import ADCSPI_MQ131
 
 adcspi_mq131 = ADCSPI_MQ131()
@@ -135,6 +135,4 @@ def main():
             time.sleep(1)
     except KeyboardInterrupt:
         GPIO.cleanup()
-
-
-if __name__ == "__main__": main()
+"""

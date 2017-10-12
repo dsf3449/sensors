@@ -15,11 +15,11 @@ import os
 import sys
 import sensors.persistence.spool as spool
 from sensors.common.logging import configure_logger
-from sensors.sensors.raspi.mq131_ozone_future import ADCSPI_MQ131
-from sensors.sensors.raspi.aeroqual_sensor import ADCSPI_AEROQUAL_SM50
-import sensors.sensors.raspi.dht11 as dht11
-from sensors.sensors.raspi.pm_sample import readlineCR
-import sensors.sensors.raspi.opc as opc
+from sensors.raspi.mq131_ozone_current import ADCSPI_MQ131
+from sensors.raspi.aeroqual_sensor import ADCSPI_AEROQUAL_SM50
+import sensors.raspi.dht11 as dht11
+from sensors.raspi.pm_sample import readlineCR
+import sensors.raspi.opc as opc
 from sensors.domain.observation import Observation
 import sensors.raspi.constants as constants
 import serial
@@ -177,6 +177,9 @@ def generate_temp_humdity():
 
 
 def generate_pm_dfrobot():
+    foi_id = os.environ["CGIST_FOI_ID"]
+    ds_id = os.environ["CGIST_DS_ID_MQ131"]  # Will be different datastream
+
     pm_info = readlineCR(port)
     parameters = {};
 
@@ -188,9 +191,14 @@ def generate_pm_dfrobot():
     else:
         logger.debug("PM data not available at this time.")
 
-    return parameters
+    return generate_observation(foi_id, ds_id,
+                                    datetime.datetime.now().isoformat(),
+                                    parameters)
 
 def generate_pm_opcn2():
+    foi_id = os.environ["CGIST_FOI_ID"]
+    ds_id = os.environ["CGIST_DS_ID_MQ131"]  # Will be different datastream
+
     # Turn on the OPC
     alpha.on()
     # Read the PM data
@@ -200,7 +208,9 @@ def generate_pm_opcn2():
         logger.debug("Key: {}\tValue: {}".format(key, value))
 
     # Returns dictionary of PM values
-    return alpha.pm()
+    return generate_observation(foi_id, ds_id,
+                                    datetime.datetime.now().isoformat(),
+                                    alpha.pm())
 
 
 def generate_observations_minute(queue):

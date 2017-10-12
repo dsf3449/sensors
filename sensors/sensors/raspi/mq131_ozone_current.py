@@ -94,9 +94,9 @@ class ADCSPI_MQ131_CURRENT():
     # Converts the Parts Per Million (ppm) value to Parts Per Billion (ppb)
     def convertPPMToPPB(self):
         ppb = self.calculate_ppm_O3() * 1000
-        return {'o3' : ppb}
+        return ppb
 
-
+"""
 from mq131_ozone_current import ADCSPI_MQ131_CURRENT
 
 adcspi_mq131 = ADCSPI_MQ131_CURRENT()
@@ -113,11 +113,11 @@ def main():
             adcspi_mq131.measure_ratio()
             adcspi_mq131.calculate_ppm_O3()
             data = adcspi_mq131.convertPPMToPPB()
-            print ("Ozone Concentration : %.3f ppb" % (data['o3']))
+            print ("Ozone Concentration : %.3f ppb" % data)
             print (" ********************************* ")
             time.sleep(5)
     except KeyboardInterrupt:
         GPIO.cleanup()
 
 if __name__ == "__main__": main()
-
+"""

@@ -77,8 +77,9 @@ class ADCSPI_AEROQUAL_SM50():
     def convertADCToPPB(self):
         """Converts the ADC value to Parts Per Billion (ppb)"""
         ppb = (500.0 / 1024.0) * self.adc_average()
-        return {'aeroqual' : ppb}
+        return ppb
 
+"""
 from aeroqual_sensor import ADCSPI_AEROQUAL_SM50
 
 adcspi_aeroqual = ADCSPI_AEROQUAL_SM50()
@@ -91,7 +92,7 @@ def main():
             adcspi_aeroqual.adc_average()
             adcspi_aeroqual.voltageADC()
             data = adcspi_aeroqual.convertADCToPPB()
-            print ("Ozone Concentration : %.3f ppb" % (data['aeroqual']))
+            print ("Ozone Concentration : %.3f ppb" % data)
             print (" ********************************* ")
             time.sleep(1)
     except KeyboardInterrupt:
@@ -99,3 +100,4 @@ def main():
 
 
 if __name__ == "__main__": main()
+"""
