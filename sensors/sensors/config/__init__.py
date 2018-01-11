@@ -76,7 +76,7 @@ def load_config():
     # Sensors
     sensor_objects = []
     for s in sensors:
-        sensor_name = get_config_element(CFG_NAME, s, CFG_SENSOR)
+        sensor_type = get_config_element(CFG_TYPE, s, CFG_SENSOR)
         observed_properties = get_config_element(CFG_OBSERVED_PROPERTIES, s, CFG_SENSOR)
         if len(observed_properties) < 1:
             mesg = "No observed properties defined in sensor {0} in YAML {1}".\
@@ -93,7 +93,7 @@ def load_config():
                 format(str(s), yaml_path)
             logging.error(mesg)
             raise ConfigurationError(mesg)
-        sensor_objects.append(Sensor(sensor_name, op_objects))
+        sensor_objects.append(Sensor(sensor_type, op_objects))
 
     if len(sensor_objects) < 1:
         mesg = "No valid sensors defined in YAML {0}".format(yaml_path)
@@ -105,14 +105,14 @@ def load_config():
     # Transports
     transport_objects = []
     for t in transports:
-        transport_name = get_config_element(CFG_NAME, t, CFG_TRANSPORT)
+        transport_type = get_config_element(CFG_TYPE, t, CFG_TRANSPORT)
         properties = get_config_element(CFG_PROPERTIES, t, CFG_TRANSPORT)
         if len(properties) < 1:
-            mesg = "No properties defined in transport with name {0} in YAML {1}".\
-                format(transport_name, yaml_path)
+            mesg = "No properties defined in transport with type {0} in YAML {1}".\
+                format(transport_type, yaml_path)
             logging.error(mesg)
             raise ConfigurationError(mesg)
-        transport_objects.append(Transport.get_instance(transport_name, **properties))
+        transport_objects.append(Transport.get_instance(transport_type, **properties))
 
     if len(transport_objects) < 1:
         mesg = "No valid transports defined in YAML {0}".format(yaml_path)
