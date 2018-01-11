@@ -5,6 +5,7 @@ from sensors.config.constants import *
 
 class Transport:
     TRANSPORT_TYPE_HTTPS = CFG_TRANSPORT_TYPE_HTTPS
+    IDENTIFIER_SEPARATOR = '|'
 
     def __init__(self, typ, **kwargs):
         self.typ = typ
@@ -18,6 +19,10 @@ class Transport:
             mesg = "Unknown transport {0}".format(typ)
             logging.error(mesg)
             raise ValueError(mesg)
+
+    def identifier(self) -> str:
+        raise NotImplementedError
+
 
 class HttpsTransport(Transport):
     """HTTPS transport with JWT authentication
@@ -34,6 +39,9 @@ class HttpsTransport(Transport):
         get_config_element(CFG_TRANSPORT_HTTPS_JWT_KEY,
                            kwargs, CFG_PROPERTIES)
         Transport.__init__(self, typ, **kwargs)
+
+    def identifier(self) -> str:
+        return Transport.IDENTIFIER_SEPARATOR.join((self.typ, self.properties[CFG_URL]))
 
 
 def get_config_element(element_name, container, container_name):

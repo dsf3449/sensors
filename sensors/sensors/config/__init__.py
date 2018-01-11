@@ -68,6 +68,7 @@ def load_config():
 
     # Convert raw config elements to ones easier to deal with (doing
     # validation along the way).
+    ds_id_present = set()
     c = {}
     # Thing
     thing_id = get_config_element(CFG_ID, config_raw[CFG_THING], CFG_THING)
@@ -88,6 +89,14 @@ def load_config():
         for op in observed_properties:
             op_name = get_config_element(CFG_NAME, op, CFG_OBSERVED_PROPERTY)
             op_ds_id = get_config_element(CFG_DATASTREAM_ID, op, CFG_OBSERVED_PROPERTY)
+            # Make sure this datastream_id hasn't already been encountered
+            if op_ds_id in ds_id_present:
+                mesg = "Datastream with ID {0} is specified more than once in YAML {1}".\
+                                         format(op_ds_id, yaml_path)
+                logging.error(mesg)
+                raise ConfigurationError(mesg)
+            else:
+                ds_id_present.add(op_ds_id)
             op_objects.append(ObservedProperty(op_name, op_ds_id))
         if len(op_objects) < 1:
             mesg = "No valid observed properties defined in sensor {0} in YAML {1}".\
@@ -104,6 +113,7 @@ def load_config():
     c[CFG_SENSORS] = sensor_objects
 
     # Transports
+    transport_present = set()
     transport_objects = []
     for t in transports:
         transport_type = get_config_element(CFG_TYPE, t, CFG_TRANSPORT)
@@ -113,7 +123,16 @@ def load_config():
                 format(transport_type, yaml_path)
             logging.error(mesg)
             raise ConfigurationError(mesg)
-        transport_objects.append(Transport.get_instance(transport_type, **properties))
+        transport_object = Transport.get_instance(transport_type, **properties)
+        t_identifier = transport_object.identifier()
+        if t_identifier in transport_present:
+            mesg = "Transport with identifier {0} is specified more than once in YAML {1}". \
+                format(t_identifier, yaml_path)
+            logging.error(mesg)
+            raise ConfigurationError(mesg)
+        else:
+            transport_present.add(t_identifier)
+        transport_objects.append(transport_object)
 
     if len(transport_objects) < 1:
         mesg = "No valid transports defined in YAML {0}".format(yaml_path)
