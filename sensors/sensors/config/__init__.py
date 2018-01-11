@@ -70,8 +70,9 @@ def load_config():
     # validation along the way).
     c = {}
     # Thing
-    foi_id = get_config_element(CFG_FOI_ID, config_raw[CFG_THING], CFG_THING)
-    c[CFG_THING] = Thing(foi_id)
+    thing_id = get_config_element(CFG_ID, config_raw[CFG_THING], CFG_THING)
+    foi_id = get_config_element(CFG_LOCATION_ID, config_raw[CFG_THING], CFG_THING)
+    c[CFG_THING] = Thing(thing_id, foi_id)
 
     # Sensors
     sensor_objects = []
@@ -124,11 +125,14 @@ def load_config():
     return c
 
 
-def get_config_element(element_name, container, container_name):
-    if element_name not in container:
+def get_config_element(element_name, container, container_name, optional=False):
+    element = None
+    if (element_name not in container) and optional is False:
         mesg = "{container_name} {container} does not contain element {element_name}".\
             format(container_name=container_name, container=str(container),
                    element_name=element_name)
         logging.error(mesg)
         raise ConfigurationError(mesg)
-    return container[element_name]
+    else:
+        element = container[element_name]
+    return element

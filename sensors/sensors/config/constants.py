@@ -4,9 +4,11 @@ ENV_YAML_PATH = 'LEARN_YAML_PATH'
 # YAML config elements
 
 # Common elements
+CFG_ID = 'id'
 CFG_NAME = 'name'
 CFG_TYPE = 'type'
 CFG_PROPERTIES = 'properties'
+CFG_LOCATION_ID = 'location_id'
 CFG_FOI_ID = 'feature_of_interest_id'
 CFG_DATASTREAM_ID = 'datastream_id'
 CFG_URL = 'url'

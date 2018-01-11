@@ -14,7 +14,8 @@ class TestConfiguration(unittest.TestCase):
 
         self.assertTrue(CFG_THING in c)
         t: Thing = c[CFG_THING]
-        self.assertEqual(t.feature_of_interest_id, 'f5610fb9-1556-42d8-862c-1d290a9b5c58')
+        self.assertEqual(t.thing_id, '5474a427-f565-4233-8f82-a8178534b150')
+        self.assertEqual(t.location_id, 'f5610fb9-1556-42d8-862c-1d290a9b5c58')
 
 if __name__ == '__main__':
     unittest.main()
