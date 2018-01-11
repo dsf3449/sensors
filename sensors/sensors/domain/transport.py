@@ -43,6 +43,18 @@ class HttpsTransport(Transport):
     def identifier(self) -> str:
         return Transport.IDENTIFIER_SEPARATOR.join((self.typ, self.properties[CFG_URL]))
 
+    def auth_url(self) -> str:
+        return self.properties[CFG_TRANSPORT_HTTPS_AUTH_URL]
+
+    def url(self) -> str:
+        return self.properties[CFG_URL]
+
+    def jwt_id(self) -> str:
+        return self.properties[CFG_TRANSPORT_HTTPS_JWT_ID]
+
+    def jwt_key(self) -> str:
+        return self.properties[CFG_TRANSPORT_HTTPS_JWT_KEY]
+
 
 def get_config_element(element_name, container, container_name):
     if element_name not in container:

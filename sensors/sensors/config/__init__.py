@@ -81,7 +81,7 @@ def load_config():
         if len(op_objects) < 1:
             raise_config_error("No valid observed properties defined in sensor {0} in YAML {1}".\
                 format(str(s), yaml_path))
-        sensor_objects.append(Sensor(sensor_type, op_objects))
+        sensor_objects.append(Sensor(sensor_type, *op_objects))
 
     if len(sensor_objects) < 1:
         raise_config_error("No valid sensors defined in YAML {0}".format(yaml_path))
