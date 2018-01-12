@@ -1,9 +1,3 @@
-from sensors.domain.thing import Thing
-from sensors.domain.sensor import Sensor
-from sensors.domain.observation import Observation
-from sensors.domain.observed_property import ObservedProperty
-from sensors.domain.transport import Transport, HttpsTransport
-
 from sensors.config.constants import *
 
 # Simulated sensors

@@ -1,6 +1,6 @@
 import sqlite3
 
-import sensors.common.constants as constants
+import sensors.config.constants as CFG_SPOOLER_DB_PATH
 from sensors.domain.observation import Observation
 
 
@@ -27,13 +27,13 @@ class SqliteRepository:
     SQL_DELETE_OBS = "DELETE FROM observation WHERE id IN ({0})"
     SQL_UPDATE_STATUS = 'UPDATE observation SET status="{0}" WHERE id IN ({1})'
 
-    @staticmethod
-    def _perform_action_with_connection(action):
-        with sqlite3.connect(constants.DB_PATH) as conn:
+    def _perform_action_with_connection(self, action):
+        with sqlite3.connect(self.db_path) as conn:
             action(conn)
             conn.commit()
 
-    def __init__(self):
+    def __init__(self, db_path):
+        self.db_path = db_path
         self._perform_action_with_connection(SqliteRepository._create_tables)
 
     @staticmethod
@@ -55,7 +55,7 @@ class SqliteRepository:
     def get_observations(self, limit="360"):
         observations = []
 
-        with sqlite3.connect(constants.DB_PATH) as conn:
+        with sqlite3.connect(self.db_path) as conn:
             for r in conn.execute(SqliteRepository.SQL_GET_OBS, (limit,)):
                 o = Observation()
                 o.id = r[0]
@@ -70,14 +70,14 @@ class SqliteRepository:
         return observations
 
     def delete_observations(self, ids):
-        with sqlite3.connect(constants.DB_PATH) as conn:
+        with sqlite3.connect(self.db_path) as conn:
             id_str = ",".join([str(i) for i in ids])
             # We control the input, so it is not so un-safe to forgo binding parameters
             conn.execute(SqliteRepository.SQL_DELETE_OBS.format(id_str))
             conn.commit()
 
     def update_observation_status(self, ids, status=STATUS_ERROR):
-        with sqlite3.connect(constants.DB_PATH) as conn:
+        with sqlite3.connect(self.db_path) as conn:
             id_str = ",".join([str(i) for i in ids])
             # We control the input, so it is not so un-safe to forgo binding parameters
             conn.execute(SqliteRepository.SQL_UPDATE_STATUS.format(status, id_str))
@@ -86,7 +86,7 @@ class SqliteRepository:
     def get_all_observations(self):
         observations = []
 
-        with sqlite3.connect(constants.DB_PATH) as conn:
+        with sqlite3.connect(self.db_path) as conn:
             for r in conn.execute(SqliteRepository.SQL_GET_ALL_OBS):
                 o = Observation()
                 o.id = r[0]

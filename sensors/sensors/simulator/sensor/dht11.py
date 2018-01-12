@@ -1,6 +1,6 @@
 import random
 
-from sensors.domain import Sensor
+from sensors.domain.sensor import Sensor
 from sensors.config.constants import *
 
 

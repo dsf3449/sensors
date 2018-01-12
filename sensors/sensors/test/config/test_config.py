@@ -1,8 +1,12 @@
 import os
 import unittest
 
+from sensors.config.constants import *
 from sensors.config import Config, ConfigurationError
-from sensors.domain import *
+from sensors.domain.thing import Thing
+from sensors.domain.sensor import Sensor
+from sensors.domain.observed_property import ObservedProperty
+from sensors.domain.transport import HttpsTransport
 
 
 class TestConfiguration(unittest.TestCase):
