@@ -10,6 +10,16 @@ class TestConfiguration(unittest.TestCase):
     def test_config_one(self):
         os.environ[ENV_YAML_PATH] = '../data/config1.yml'
         c = Config(unittest=True).config
+
+        # Simulator
+        self.assertTrue(CFG_SIMULATOR in c)
+        self.assertTrue(c[CFG_SIMULATOR])
+        # Logging
+        self.assertTrue(CFG_LOGGING_LOGGER_PATH in c)
+        self.assertEqual(c[CFG_LOGGING_LOGGER_PATH], '/var/log/sensor.log')
+        # Spooler
+        self.assertTrue(CFG_SPOOLER_DB_PATH in c)
+        self.assertEqual(c[CFG_SPOOLER_DB_PATH], '/var/spool/mqueue/sensor.sqlite')
         # Thing
         self.assertTrue(CFG_THING in c)
         t: Thing = c[CFG_THING]

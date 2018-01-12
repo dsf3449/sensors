@@ -1,13 +1,14 @@
 import logging
 
 from sensors.common import constants
+from sensors.config.constants import CFG_LOGGING_LOGGER_PATH
 
 
-def configure_logger():
+def configure_logger(c):
     logger = get_logger()
     logger.setLevel(logging.DEBUG)
 
-    fh = logging.FileHandler(constants.LOGGER_FILE)
+    fh = logging.FileHandler(c[CFG_LOGGING_LOGGER_PATH])
     fh.setLevel(logging.INFO)
 
     ch = logging.StreamHandler()

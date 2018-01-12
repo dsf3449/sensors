@@ -15,6 +15,13 @@ CFG_URL = 'url'
 CFG_ENABLED = 'enabled'
 
 CFG_SIMULATOR = 'simulator'
+
+CFG_LOGGING = 'logging'
+CFG_LOGGING_LOGGER_PATH = 'logger_path'
+
+CFG_SPOOLER = 'spooler'
+CFG_SPOOLER_DB_PATH = 'db_path'
+
 CFG_THING = 'thing'
 
 CFG_SENSORS = 'sensors'

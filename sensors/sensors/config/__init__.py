@@ -1,6 +1,7 @@
 import os
 import io
 
+from sensors.common.constants import *
 from sensors.config.constants import *
 from sensors.domain.observed_property import *
 from sensors.domain.thing import *
@@ -64,7 +65,7 @@ class Config():
             ds_id_present = set()
             c = {}
 
-            # Check for simulator configuration
+            # Simulator
             simulator_enabled = False
             if CFG_SIMULATOR in config_raw:
                 simulator_enabled = get_config_element(CFG_ENABLED, config_raw[CFG_SIMULATOR], CFG_SIMULATOR,
@@ -72,6 +73,24 @@ class Config():
                 if simulator_enabled is None:
                     simulator_enabled = False
             c[CFG_SIMULATOR] = simulator_enabled
+
+            # Logging
+            logger_path = DEFAULT_LOGGER_PATH
+            if CFG_LOGGING in config_raw:
+                logger_path = get_config_element(CFG_LOGGING_LOGGER_PATH, config_raw[CFG_LOGGING], CFG_LOGGING,
+                                                 optional=True)
+                if logger_path is None:
+                    logger_path = DEFAULT_LOGGER_PATH
+            c[CFG_LOGGING_LOGGER_PATH] = logger_path
+
+            # Spooler
+            db_path = DEFAULT_DB_PATH
+            if CFG_SPOOLER in config_raw:
+                db_path = get_config_element(CFG_SPOOLER_DB_PATH, config_raw[CFG_SPOOLER], CFG_SPOOLER,
+                                             optional=True)
+                if db_path is None:
+                    db_path = DEFAULT_DB_PATH
+            c[CFG_SPOOLER_DB_PATH] = db_path
 
             # Thing
             thing_id = get_config_element(CFG_ID, config_raw[CFG_THING], CFG_THING)
