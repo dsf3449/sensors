@@ -1,8 +1,11 @@
 from sensors.config.constants import CFG_SPOOLER_DB_PATH
+from sensors.config import Config
 from sensors.common.logging import configure_logger
 from sensors.persistence.sqlite import SqliteRepository
 
-def spool_data(config, q):
+
+def spool_data(q):
+    config = Config().config
     logger = configure_logger(config)
     repo = SqliteRepository(config[CFG_SPOOLER_DB_PATH])
     while True:

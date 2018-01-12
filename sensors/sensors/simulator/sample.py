@@ -12,7 +12,7 @@ from sensors.config import Config, ConfigurationError
 from sensors.config.constants import *
 
 
-SAMPLE_INTERVAL_ONE_MINUTE = 60
+SAMPLE_INTERVAL_ONE_MINUTE = 3
 SCHEDULE_PRIORITY_DEFAULT = 1
 
 
@@ -33,20 +33,26 @@ def _next_date():
     return next_date
 
 
-def generate_observations_minute(config, queue):
+def generate_observations_minute(queue):
+    config = Config().config
+    logger = configure_logger(config)
+    logger.debug("Begin generate_observations_minute...")
     thing = config[CFG_THING]
     foi_id = thing.location_id
 
     sensors = config[CFG_SENSORS]
     # Iterate over sensors and generate observations
+    logger.debug("Iterating over {0} sensors...".format(len(sensors)))
     for s in sensors:
+        logger.debug(str(s))
+        logger.debug("Calling generate_observations for sensor {0}...".format(s.name))
         observations = s.generate_observations(phenomenon_time=_next_date(),
                                                feature_of_interest_id=foi_id)
+        logger.debug("Enqueing observations...")
         [queue.put(o) for o in observations]
 
 
-def sample(config,
-           start_date=datetime.datetime.now().isoformat(),
+def sample(start_date=datetime.datetime.now().isoformat(),
            date_interval=datetime.timedelta(minutes=1)):
     global next_date
     global di
@@ -60,10 +66,14 @@ def sample(config,
     try:
         # Start process to send data to
         mp.set_start_method('spawn')
+        logger.debug("About to create queue...")
         q = mp.Queue()
-        p = mp.Process(target=spool.spool_data, args=(config, q))
+        logger.debug("About to create process...")
+        p = mp.Process(target=spool.spool_data, args=(q,))
+        logger.debug("About to start process...")
         p.start()
 
+        logger.debug("About to start scheduler...")
         s = sched.scheduler(time.time, time.sleep)
 
         while True:
@@ -72,7 +82,7 @@ def sample(config,
             s.enter(SAMPLE_INTERVAL_ONE_MINUTE,
                     SCHEDULE_PRIORITY_DEFAULT,
                     generate_observations_minute,
-                    argument=(config, q))
+                    argument=(q,))
             # Run scheduled events
             logger.debug("Sampler: Running scheduler...")
             s.run()
@@ -121,4 +131,4 @@ def main():
     date_interval = datetime.timedelta(minutes=args.dateint)
     print("Date interval: {0} minutes".format(str(date_interval)))
 
-    sample(config, start_date=start_date, date_interval=date_interval)
+    sample(start_date=start_date, date_interval=date_interval)
