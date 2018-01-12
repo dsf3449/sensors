@@ -38,7 +38,7 @@ class HttpsTransport(Transport):
                            kwargs, CFG_PROPERTIES)
         get_config_element(CFG_TRANSPORT_HTTPS_JWT_KEY,
                            kwargs, CFG_PROPERTIES)
-        Transport.__init__(self, typ, **kwargs)
+        super().__init__(typ, **kwargs)
 
     def identifier(self) -> str:
         return Transport.IDENTIFIER_SEPARATOR.join((self.typ, self.properties[CFG_URL]))

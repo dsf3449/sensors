@@ -1,7 +1,50 @@
-from .observed_property import ObservedProperty
+from typing import List
+from datetime import datetime
+
+from sensors.domain.observation import Observation
 
 
 class Sensor:
     def __init__(self, typ, *args):
         self.typ = typ
         self.observed_properties = list(args)
+        self.obs_func_tab = {}
+
+    def generate_observations(self,
+                              phenomenon_time=None,
+                              generate_phenomenon_time=lambda: datetime.now().isoformat(),
+                              feature_of_interest_id=None):
+        """Generate observations for a given phenomenon time for all observed properties
+           registered with a sensor.
+        :param phenomenon_time: A string representing the phenomenon time to apply to all observations
+        :param generate_phenomenon_time: A function that when called yields the phenomenon time to apply
+        a given observation.  If phenomenon_time is not set, generate_phenomenon_time() will be used.
+        :param datastream_id:
+        :param feature_of_interest_id:
+        :return: A List[Observation] of Observations created
+        """
+        obs: List[Observation] = []
+        for op in self.observed_properties:
+            generate_observation = self.obs_func_tab[op.name]
+            t = phenomenon_time
+            if t is None:
+                t = generate_phenomenon_time()
+            (result, parameters) = generate_observation()
+            obs.append(self._make_observation(feature_of_interest_id,
+                                              op.datastream_id,
+                                              t,
+                                              result,
+                                              parameters))
+        return obs
+
+    @staticmethod
+    def _make_observation(self, feature_of_interest_id, datastream_id, phenomenon_time,
+                          result, parameters):
+        o = Observation()
+        o.featureOfInterestId = feature_of_interest_id
+        o.datastreamId = datastream_id
+        o.phenomenonTime = phenomenon_time
+        o.result = result
+        o.set_parameters(**parameters)
+
+        return o
