@@ -1,8 +1,7 @@
 import os
 import unittest
 
-from sensors.config import load_config, ConfigurationError
-from sensors.config.constants import *
+from sensors.config import Config, ConfigurationError
 from sensors.domain import *
 
 
@@ -10,7 +9,7 @@ class TestConfiguration(unittest.TestCase):
 
     def test_config_one(self):
         os.environ[ENV_YAML_PATH] = '../data/config1.yml'
-        c = load_config()
+        c = Config(unittest=True).config
         # Thing
         self.assertTrue(CFG_THING in c)
         t: Thing = c[CFG_THING]
@@ -60,12 +59,12 @@ class TestConfiguration(unittest.TestCase):
     def test_config_one_dupe_ds_id(self):
         os.environ[ENV_YAML_PATH] = '../data/config1-dupe-ds_id.yml'
         with self.assertRaises(ConfigurationError):
-            c = load_config()
+            c = Config(unittest=True).config
 
     def test_config_one_dupe_transport(self):
         os.environ[ENV_YAML_PATH] = '../data/config1-dupe-transport.yml'
         with self.assertRaises(ConfigurationError):
-            c = load_config()
+            c = Config(unittest=True).config
 
 
 if __name__ == '__main__':
