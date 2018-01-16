@@ -3,26 +3,30 @@ import logging
 from sensors.common import constants
 from sensors.config.constants import CFG_LOGGING_LOGGER_PATH
 
+loggers = {}
+
 
 def configure_logger(c):
-    logger = get_logger()
-    logger.setLevel(logging.DEBUG)
+    global loggers
 
-    fh = logging.FileHandler(c[CFG_LOGGING_LOGGER_PATH])
-    fh.setLevel(logging.INFO)
+    logger = loggers.get(constants.LOGGER_NAME)
+    if not logger:
+        logger = logging.getLogger(constants.LOGGER_NAME)
+        logger.setLevel(logging.DEBUG)
 
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
+        fh = logging.FileHandler(c[CFG_LOGGING_LOGGER_PATH])
+        fh.setLevel(logging.INFO)
 
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    fh.setFormatter(formatter)
-    ch.setFormatter(formatter)
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.DEBUG)
 
-    logger.addHandler(fh)
-    logger.addHandler(ch)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        fh.setFormatter(formatter)
+        ch.setFormatter(formatter)
+
+        logger.addHandler(fh)
+        logger.addHandler(ch)
+
+        loggers[constants.LOGGER_NAME] = logger
 
     return logger
-
-
-def get_logger():
-    return logging.getLogger(constants.LOGGER_NAME)
