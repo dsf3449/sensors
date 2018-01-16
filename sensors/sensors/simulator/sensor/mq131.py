@@ -15,7 +15,7 @@ class Mq131(Sensor):
                       "Rs_Ro_Ratio": str(random.uniform(1.23, 123.45))}
         return result, parameters
 
-    VALID_OBSERVED_PROPERTIES = {CFG_OBSERVED_PROPERTY_OZONE: _ozone}
+    VALID_OBSERVED_PROPERTIES = {CFG_OBSERVED_PROPERTY_OZONE}
 
     def __init__(self, typ, *args):
         super().__init__(typ, *args)
@@ -30,12 +30,4 @@ class Mq131(Sensor):
                              format(self.NAME, op.name))
 
         # Register with observation generation function lookup table
-        self.obs_func_tab.update(self.VALID_OBSERVED_PROPERTIES)
-
-    def _ozone(self):
-        result = random.uniform(1.23, 123.45)
-        parameters = {"voltage": str(random.uniform(1.23, 123.45)),
-                      "Rs": str(random.uniform(1.23, 123.45)),
-                      "Ro": str(random.uniform(1.23, 123.45)),
-                      "Rs_Ro_Ratio": str(random.uniform(1.23, 123.45))}
-        return result, parameters
+        self.obs_func_tab[op.name] = self._ozone

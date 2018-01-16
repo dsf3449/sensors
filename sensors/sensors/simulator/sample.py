@@ -24,7 +24,7 @@ next_date = None
 di = None
 
 
-def _next_date():
+def _next_date() -> datetime:
     global next_date
     if next_date is None:
         next_date = datetime.datetime.now().isoformat()
@@ -41,12 +41,15 @@ def generate_observations_minute(queue):
     foi_id = thing.location_id
 
     sensors = config[CFG_SENSORS]
+
+    # import pdb; pdb.set_trace()
+
     # Iterate over sensors and generate observations
     logger.debug("Iterating over {0} sensors...".format(len(sensors)))
     for s in sensors:
         logger.debug(str(s))
-        logger.debug("Calling generate_observations for sensor {0}...".format(s.name))
-        observations = s.generate_observations(phenomenon_time=_next_date(),
+        logger.debug("Calling generate_observations for sensor type {0}...".format(s.typ))
+        observations = s.generate_observations(phenomenon_time=_next_date().isoformat(),
                                                feature_of_interest_id=foi_id)
         logger.debug("Enqueing observations...")
         [queue.put(o) for o in observations]

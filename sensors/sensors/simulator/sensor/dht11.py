@@ -17,8 +17,8 @@ class Dht11(Sensor):
         parameters = {"Air temperature": str(random.uniform(1.23, 123.45))}
         return result, parameters
 
-    VALID_OBSERVED_PROPERTIES = {CFG_OBSERVED_PROPERTY_AIR_TEMP: _air_temperature,
-                                 CFG_OBSERVED_PROPERTY_RH: _relative_humidity}
+    VALID_OBSERVED_PROPERTIES = {CFG_OBSERVED_PROPERTY_AIR_TEMP,
+                                 CFG_OBSERVED_PROPERTY_RH}
 
     def __init__(self, typ, *args):
         super().__init__(typ, *args)
@@ -34,4 +34,8 @@ class Dht11(Sensor):
                                  format(self.NAME, args[0].name))
 
         # Register with observation generation function lookup table
-        self.obs_func_tab.update(self.VALID_OBSERVED_PROPERTIES)
+        for op in self.VALID_OBSERVED_PROPERTIES:
+            if op == CFG_OBSERVED_PROPERTY_AIR_TEMP:
+                self.obs_func_tab[CFG_OBSERVED_PROPERTY_AIR_TEMP] = self._air_temperature
+            elif op == CFG_OBSERVED_PROPERTY_RH:
+                self.obs_func_tab[CFG_OBSERVED_PROPERTY_RH] = self._relative_humidity
