@@ -47,3 +47,23 @@ class Sensor:
         o.set_parameters(**parameters)
 
         return o
+
+
+class OzoneSensor(Sensor):
+    def _ozone(self):
+        raise NotImplementedError
+
+    def __init__(self, typ, *args):
+        super().__init__(typ, *args)
+
+        # Validate observed properties
+        if len(args) != 1:
+            raise ValueError("Sensor {0} must only have one observed property, but {1} were provided.".\
+                             format(self.NAME, len(args)))
+        op = args[0]
+        if op.name not in self.VALID_OBSERVED_PROPERTIES:
+            raise ValueError("Sensor {0} was configured with invalid observed property {1}".\
+                             format(self.NAME, op.name))
+
+        # Register with observation generation function lookup table
+        self.obs_func_tab[op.name] = self._ozone

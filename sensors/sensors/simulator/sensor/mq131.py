@@ -1,10 +1,10 @@
 import random
 
-from sensors.domain.sensor import Sensor
+from sensors.domain.sensor import OzoneSensor
 from sensors.config.constants import *
 
 
-class Mq131(Sensor):
+class Mq131(OzoneSensor):
     NAME = CFG_SENSOR_TYPE_MQ131
 
     def _ozone(self):
@@ -19,15 +19,3 @@ class Mq131(Sensor):
 
     def __init__(self, typ, *args):
         super().__init__(typ, *args)
-
-        # Validate observed properties
-        if len(args) != 1:
-            raise ValueError("Sensor {0} must only have one observed property, but {1} were provided.".\
-                             format(self.NAME, len(args)))
-        op = args[0]
-        if op.name not in self.VALID_OBSERVED_PROPERTIES:
-            raise ValueError("Sensor {0} was configured with invalid observed property {1}".\
-                             format(self.NAME, op.name))
-
-        # Register with observation generation function lookup table
-        self.obs_func_tab[op.name] = self._ozone

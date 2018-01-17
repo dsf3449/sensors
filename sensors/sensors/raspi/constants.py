@@ -9,7 +9,9 @@ RESOLUTION = 2**10  # for 10 bits of resolution
 CALIBRATION = 38    # in mV, to make up for the precision of the components
 
 # Equation values
-PC_CURVE = [42.84561841, -1.043297135]   # MQ131 O3 coordinates on curve
+# MQ131 O3 coordinates on curve
+PC_CURVE_0 = 42.84561841
+PC_CURVE_1 = -1.043297135
 RL_MQ131 = 0.679                         # MQ131 Sainsmart Resistor Load value
 READ_SAMPLE_VALUES = 5                   # Number of samples to read to get average
 READ_SAMPLE_TIME = 0.1                   # Reads sample data in milliseconds

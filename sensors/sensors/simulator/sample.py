@@ -12,7 +12,7 @@ from sensors.config import Config, ConfigurationError
 from sensors.config.constants import *
 
 
-SAMPLE_INTERVAL_ONE_MINUTE = 3
+SAMPLE_INTERVAL_ONE_MINUTE = 60
 SCHEDULE_PRIORITY_DEFAULT = 1
 
 
