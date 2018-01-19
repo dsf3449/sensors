@@ -38,9 +38,9 @@ def main():
             adcspi_mq131_future.measure_ratio()
             adcspi_mq131_future.calculate_ppm_O3()
             data_new_alg = adcspi_mq131_future.convertPPMToPPB()
-            print "Ozone Concentration_Current_Algorithm : %.3f ppb" % (data_current_alg['o3'])
-            print "Ozone Concentration_New_Algorithm : %.3f ppb" % (data_new_alg['o3'])
-            print " ********************************* "
+            print("Ozone Concentration_Current_Algorithm : {0:.3f} ppb".format(data_current_alg['o3']))
+            print("Ozone Concentration_New_Algorithm : {0:.3f} ppb".format(data_new_alg['o3']))
+            print(" ********************************* ")
             time.sleep(5)
     except KeyboardInterrupt:
         GPIO.cleanup()
