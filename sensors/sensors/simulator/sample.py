@@ -40,11 +40,8 @@ def generate_observations_minute(queue):
     thing = config[CFG_THING]
     foi_id = thing.location_id
 
-    sensors = config[CFG_SENSORS]
-
-    # import pdb; pdb.set_trace()
-
     # Iterate over sensors and generate observations
+    sensors = config[CFG_SENSORS]
     logger.debug("Iterating over {0} sensors...".format(len(sensors)))
     for s in sensors:
         logger.debug(str(s))
