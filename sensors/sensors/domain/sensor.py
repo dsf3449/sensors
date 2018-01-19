@@ -1,6 +1,7 @@
 from typing import List
 from datetime import datetime
 
+from sensors.config.constants import *
 from sensors.domain.observation import Observation
 
 
@@ -50,6 +51,8 @@ class Sensor:
 
 
 class OzoneSensor(Sensor):
+    VALID_OBSERVED_PROPERTIES = {CFG_OBSERVED_PROPERTY_OZONE}
+
     def _ozone(self):
         raise NotImplementedError
 
@@ -67,3 +70,34 @@ class OzoneSensor(Sensor):
 
         # Register with observation generation function lookup table
         self.obs_func_tab[op.name] = self._ozone
+
+
+class AirTempRHSensor(Sensor):
+    VALID_OBSERVED_PROPERTIES = {CFG_OBSERVED_PROPERTY_AIR_TEMP,
+                                 CFG_OBSERVED_PROPERTY_RH}
+
+    def _air_temperature(self):
+        raise NotImplementedError
+
+    def _relative_humidity(self):
+        raise NotImplementedError
+
+    def __init__(self, typ, *args):
+        super().__init__(typ, *args)
+
+        # Validate observed properties
+        if len(args) != 1 and len(args) != 2:
+            raise ValueError("Sensor {0} must only have one or two observed properties, but {1} were provided.".\
+                             format(self.NAME, len(args)))
+        # Check for duplicate definition of an observed property
+        if len(args) == 2:
+            if args[0].name == args[1].name:
+                raise ValueError("Sensor {0} has duplicate definition of observed property {1}".\
+                                 format(self.NAME, args[0].name))
+
+        # Register with observation generation function lookup table
+        for op in self.VALID_OBSERVED_PROPERTIES:
+            if op == CFG_OBSERVED_PROPERTY_AIR_TEMP:
+                self.obs_func_tab[CFG_OBSERVED_PROPERTY_AIR_TEMP] = self._air_temperature
+            elif op == CFG_OBSERVED_PROPERTY_RH:
+                self.obs_func_tab[CFG_OBSERVED_PROPERTY_RH] = self._relative_humidity

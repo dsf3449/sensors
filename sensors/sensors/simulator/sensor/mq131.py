@@ -15,7 +15,5 @@ class Mq131(OzoneSensor):
                       "Rs_Ro_Ratio": str(random.uniform(1.23, 123.45))}
         return result, parameters
 
-    VALID_OBSERVED_PROPERTIES = {CFG_OBSERVED_PROPERTY_OZONE}
-
     def __init__(self, typ, *args):
         super().__init__(typ, *args)
