@@ -1,5 +1,5 @@
 from typing import List
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sensors.config.constants import *
 from sensors.domain.observation import Observation
@@ -73,17 +73,38 @@ class OzoneSensor(Sensor):
 
 
 class AirTempRHSensor(Sensor):
+
     VALID_OBSERVED_PROPERTIES = {CFG_OBSERVED_PROPERTY_AIR_TEMP,
                                  CFG_OBSERVED_PROPERTY_RH}
+    RESULT_TTL = timedelta(milliseconds=1000)
+
+    def _read(self):
+        raise NotImplementedError
+
+    def _sample(self):
+        if self.previous_result:
+            now = datetime.now()
+            if self.previous_result.timestamp + AirTempRHSensor.RESULT_TTL > now:
+                return self.previous_result
+
+        result = self._read()
+        self.previous_result = result
+        return result
 
     def _air_temperature(self):
-        raise NotImplementedError
+        result = self._sample()
+        parameters = {"RH": result.humidity}
+        return result.temperature, parameters
 
     def _relative_humidity(self):
-        raise NotImplementedError
+        result = self._sample()
+        parameters = {"T_air": result.temperature}
+        return result.humidity, parameters
 
     def __init__(self, typ, *args):
         super().__init__(typ, *args)
+
+        self.previous_result = None
 
         # Validate observed properties
         if len(args) != 1 and len(args) != 2:
@@ -101,3 +122,9 @@ class AirTempRHSensor(Sensor):
                 self.obs_func_tab[CFG_OBSERVED_PROPERTY_AIR_TEMP] = self._air_temperature
             elif op == CFG_OBSERVED_PROPERTY_RH:
                 self.obs_func_tab[CFG_OBSERVED_PROPERTY_RH] = self._relative_humidity
+
+    class AirTempRHResult:
+        def __init__(self, temperature, humidity):
+            self.timestamp = datetime.now()
+            self.temperature = temperature
+            self.humidity = humidity
