@@ -15,7 +15,7 @@ import os
 import sys
 import sensors.persistence.spool as spool
 from sensors.common.logging import configure_logger
-from sensors.raspi.mq131_ozone_current import ADCSPI_MQ131
+from sensors.raspi.mq131_ozone_current import ADCSPI_MQ131_CURRENT as ADCSPI_MQ131
 from sensors.raspi.aeroqual_sensor import ADCSPI_AEROQUAL_SM50
 import sensors.raspi.dht11 as dht11
 from sensors.raspi.pm_sample import readlineCR
