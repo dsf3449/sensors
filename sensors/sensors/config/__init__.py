@@ -32,6 +32,8 @@ class Config():
             :return: Dictionary representing configuration
             """
             yaml_path = os.environ.get(ENV_YAML_PATH)
+            if yaml_path is None:
+                _raise_config_error("No configuration file defined, please make sure environment variable ENV_YAML_PATH is set".format(yaml_path))
             config_raw = None
             with io.open(yaml_path, 'r') as f:
                 config_raw = yaml.safe_load(f)
