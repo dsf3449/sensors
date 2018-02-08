@@ -19,7 +19,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.2.0',
+    version='0.3.0',
 
     description='LEaRN Data Logger',
     long_description=long_description,
@@ -53,7 +53,6 @@ setup(
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
@@ -79,7 +78,8 @@ setup(
                       'RPi.GPIO',
                       'serial',
                       'py-opc',
-                      'adafruit-ads1x15'],
+                      'adafruit-ads1x15'
+                      ],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
@@ -109,6 +109,7 @@ setup(
     entry_points={
         'console_scripts': [
             'sensor_raspi_sample=sensors.raspi.sample:main',
+            'sensor_raspi_test=sensors.raspi.test:main',
             'sensor_transmit=sensors.network.transmit:main',
             'sensor_simulator=sensors.simulator.sample:main'
         ],
