@@ -26,7 +26,7 @@ class TestConfiguration(unittest.TestCase):
         self.assertEqual(c[CFG_SPOOLER_DB_PATH], '/var/spool/mqueue/sensor.sqlite')
         # Thing
         self.assertTrue(CFG_THING in c)
-        t: Thing = c[CFG_THING]
+        t = c[CFG_THING]
         self.assertEqual(t.thing_id, '5474a427-f565-4233-8f82-a8178534b150')
         self.assertEqual(t.location_id, 'f5610fb9-1556-42d8-862c-1d290a9b5c58')
         # Sensors
