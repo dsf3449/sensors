@@ -26,7 +26,7 @@ class Sensor:
         :param feature_of_interest_id:
         :return: A List[Observation] of Observations created
         """
-        obs: List[Observation] = []
+        obs = []
         for op in self.observed_properties:
             generate_observation = self.obs_func_tab[op.name]
             t = phenomenon_time
