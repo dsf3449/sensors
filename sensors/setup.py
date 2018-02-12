@@ -111,7 +111,8 @@ setup(
             'sensor_raspi_sample=sensors.raspi.sample:main',
             'sensor_raspi_test=sensors.raspi.test:main',
             'sensor_transmit=sensors.network.transmit:main',
-            'sensor_simulator=sensors.simulator.sample:main'
+            'sensor_simulator=sensors.simulator.sample:main',
+            'sample_dht=sensors.raspi.sample_temp_humidity:main'
         ],
     },
 )
