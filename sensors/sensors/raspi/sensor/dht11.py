@@ -8,7 +8,7 @@ from sensors.config.constants import *
 
 class Dht11(AirTempRHSensor):
     NAME = CFG_SENSOR_TYPE_DHT11
-    GPIO_PIN = 0
+    GPIO_PIN = 17
     STATE_INIT_PULL_DOWN = 1
     STATE_INIT_PULL_UP = 2
     STATE_DATA_FIRST_PULL_DOWN = 3
