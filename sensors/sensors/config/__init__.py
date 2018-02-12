@@ -96,6 +96,9 @@ class Config():
                                              optional=True)
                 if db_path is None:
                     db_path = DEFAULT_DB_PATH
+            db_path_dir = os.path.dirname(db_path)
+            if not os.path.exists(db_path_dir):
+                raise _raise_config_error("Spooler path directory {0} does not exist.".format(db_path_dir))
             c[CFG_SPOOLER_DB_PATH] = db_path
 
             # Thing
