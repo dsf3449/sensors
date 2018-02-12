@@ -3,7 +3,7 @@ import time
 
 import RPi.GPIO as GPIO
 
-import sensors.sensors.raspi.dht11 as dht11
+import sensors.raspi.dht11 as dht11
 
 def main():
     # initialize GPIO
