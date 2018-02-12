@@ -1,4 +1,5 @@
 import logging
+import os
 
 from sensors.common import constants
 from sensors.config.constants import CFG_LOGGING_LOGGER_PATH
@@ -11,10 +12,14 @@ def configure_logger(c):
 
     logger = loggers.get(constants.LOGGER_NAME)
     if not logger:
+        logger_path = c[CFG_LOGGING_LOGGER_PATH]
+        if not os.path.exists(logger_path):
+            raise FileNotFoundError("Logger path {0} does not exist.".format(logger_path))
+
         logger = logging.getLogger(constants.LOGGER_NAME)
         logger.setLevel(logging.DEBUG)
 
-        fh = logging.FileHandler(c[CFG_LOGGING_LOGGER_PATH])
+        fh = logging.FileHandler(logger_path)
         fh.setLevel(logging.INFO)
 
         ch = logging.StreamHandler()
