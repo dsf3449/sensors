@@ -25,7 +25,3 @@ def get_sensor_instance(typ, *args):
         return dht11.Dht11(typ, *args)
     else:
         raise ValueError("Unknown sensor type {0}".format(typ))
-
-
-def get_sensor_instance(typ, *args):
-    raise NotImplementedError
