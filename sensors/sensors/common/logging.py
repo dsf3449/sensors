@@ -13,8 +13,9 @@ def configure_logger(c):
     logger = loggers.get(constants.LOGGER_NAME)
     if not logger:
         logger_path = c[CFG_LOGGING_LOGGER_PATH]
-        if not os.path.exists(logger_path):
-            raise FileNotFoundError("Logger path {0} does not exist.".format(logger_path))
+        logger_path_dir = os.path.basename(logger_path)
+        if not os.path.exists(logger_path_dir):
+            raise FileNotFoundError("Logger path directory {0} does not exist.".format(logger_path_dir))
 
         logger = logging.getLogger(constants.LOGGER_NAME)
         logger.setLevel(logging.DEBUG)
