@@ -84,6 +84,9 @@ class Config():
                                                  optional=True)
                 if logger_path is None:
                     logger_path = DEFAULT_LOGGER_PATH
+            logger_path_dir = os.path.dirname(logger_path)
+            if not os.path.exists(logger_path_dir):
+                raise _raise_config_error("Logger path directory {0} does not exist.".format(logger_path_dir))
             c[CFG_LOGGING_LOGGER_PATH] = logger_path
 
             # Spooler
