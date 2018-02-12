@@ -33,7 +33,7 @@ class Config():
             """
             yaml_path = os.environ.get(ENV_YAML_PATH)
             if yaml_path is None:
-                _raise_config_error("No configuration file defined, please make sure environment variable ${0} is set".\
+                _raise_config_error("No configuration file defined, please make sure environment variable {0} is set".\
                                     format(ENV_YAML_PATH))
             config_raw = None
             with io.open(yaml_path, 'r') as f:
