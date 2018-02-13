@@ -13,6 +13,7 @@ CALIBRATION = 38    # in mV, to make up for the precision of the components
 PC_CURVE_0 = 42.84561841
 PC_CURVE_1 = -1.043297135
 RL_MQ131 = 0.679                         # MQ131 Sainsmart Resistor Load value
+RO_DEFAULT_MQ131 = 2.511                 # Must be calibrated per sensor, this is used as a default
 READ_SAMPLE_VALUES = 5                   # Number of samples to read to get average
 READ_SAMPLE_TIME = 0.1                   # Reads sample data in milliseconds
 

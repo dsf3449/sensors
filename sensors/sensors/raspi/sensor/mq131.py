@@ -29,7 +29,8 @@ class Mq131(OzoneSensor):
         # Get the Rs value (O3 concentration) from the average of the 5 readings
         rs = self._mq_resistance(adc_avg)
         # Get the Ro (Clean Air) value from the average of the 5 readings
-        ro = self._measure_Ro(rs)
+        # ro = self._measure_Ro(rs)
+        ro = RO_DEFAULT_MQ131
         ratio = self._rs_over_ro_ratio(rs, ro)
         ppb = self._calculate_ppb_o3(ratio, ro)
         # Metadata
