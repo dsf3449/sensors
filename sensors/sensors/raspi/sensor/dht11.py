@@ -49,22 +49,23 @@ class Dht11(AirTempRHSensor):
 
     def _read(self):
         # Initialize GPIO
-        GPIO.cleanup()
+        pin = self.GPIO_PIN
+        assert (pin == 17)
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.GPIO_PIN, GPIO.OUT)
+        GPIO.setup(pin, GPIO.OUT)
 
         # send initial high
-        self._send_and_sleep(self.GPIO_PIN, GPIO.HIGH, 0.05)
+        self._send_and_sleep(pin, GPIO.HIGH, 0.05)
 
         # pull down to low
-        self._send_and_sleep(self.GPIO_PIN, GPIO.LOW, 0.02)
+        self._send_and_sleep(pin, GPIO.LOW, 0.02)
 
         # change to input using pull up
-        GPIO.setup(self.GPIO_PIN, GPIO.IN, GPIO.PUD_UP)
+        GPIO.setup(pin, GPIO.IN, GPIO.PUD_UP)
 
         # collect data into an array
-        data = self._collect_input(self.GPIO_PIN)
+        data = self._collect_input(pin)
 
         # parse lengths of all data pull up periods
         pull_up_lengths = self._parse_data_pull_up_lengths(data)
