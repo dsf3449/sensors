@@ -213,7 +213,7 @@ class Dht11(AirTempRHSensor):
         return the_bytes
 
     @staticmethod
-    def __calculate_checksum(the_bytes):
+    def _calculate_checksum(the_bytes):
         return the_bytes[0] + the_bytes[1] + the_bytes[2] + the_bytes[3] & 255
 
     def __init__(self, typ, *args):
