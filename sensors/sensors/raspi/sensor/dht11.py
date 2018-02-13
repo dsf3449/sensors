@@ -48,6 +48,10 @@ class Dht11(AirTempRHSensor):
     STATE_DATA_PULL_DOWN = 5
 
     def _read(self):
+        # initialize GPIO
+        GPIO.setwarnings(False)
+        GPIO.setmode(GPIO.BCM)
+        GPIO.cleanup()
         GPIO.setup(self.GPIO_PIN, GPIO.OUT)
 
         # send initial high
