@@ -18,7 +18,7 @@ def configure_logger(c):
         logger.setLevel(logging.DEBUG)
 
         fh = logging.FileHandler(logger_path)
-        fh.setLevel(logging.INFO)
+        fh.setLevel(logging.DEBUG)
 
         ch = logging.StreamHandler()
         ch.setLevel(logging.DEBUG)
