@@ -3,7 +3,7 @@ import time
 
 import RPi.GPIO as GPIO
 
-from sensors.raspi.sensor.dht11 import Dht11
+from sensors.domain import get_sensor_instance
 
 def main():
     # initialize GPIO
@@ -12,7 +12,7 @@ def main():
     GPIO.cleanup()
 
     # read data using pin 14
-    instance = Dht11("dht11", [])
+    instance = get_sensor_instance("dht11", [])
     result = instance._read()
 
     if result.is_valid():
