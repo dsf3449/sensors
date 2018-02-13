@@ -50,11 +50,6 @@ class Dht11(AirTempRHSensor):
     def _read(self):
         # Initialize GPIO
         pin = self.GPIO_PIN
-        try:
-            GPIO.cleanup()
-        except RuntimeWarning:
-            pass
-        GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(pin, GPIO.OUT)
 

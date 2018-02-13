@@ -15,11 +15,6 @@ class Mq131(OzoneSensor):
 
     def _ozone(self):
         # Initialize GPIO
-        try:
-            GPIO.cleanup()
-        except RuntimeWarning:
-            pass
-        GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
         # set up the SPI interface pins
         GPIO.setup(SPI_MOSI, GPIO.OUT)
