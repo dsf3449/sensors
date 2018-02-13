@@ -52,7 +52,6 @@ class Dht11(AirTempRHSensor):
         # Initialize GPIO
         pin = self.GPIO_PIN
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(pin, GPIO.OUT)
 
         # Sample until we get a valid result, or after trying MAX_ITR - 1 times ...
         num_itr = 0
@@ -61,6 +60,9 @@ class Dht11(AirTempRHSensor):
 
             # Make sure we don't sample faster than 1 Hz
             time.sleep(1)
+
+            # Need to do this in the loop for some reason
+            GPIO.setup(pin, GPIO.OUT)
 
             # send initial high
             self._send_and_sleep(pin, GPIO.HIGH, 0.05)
