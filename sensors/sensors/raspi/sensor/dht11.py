@@ -58,6 +58,10 @@ class Dht11(AirTempRHSensor):
         num_itr = 0
         while True:
             num_itr += 1
+
+            # Make sure we don't sample faster than 1 Hz
+            time.sleep(1)
+
             # send initial high
             self._send_and_sleep(pin, GPIO.HIGH, 0.05)
 
