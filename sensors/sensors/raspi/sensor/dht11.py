@@ -46,6 +46,7 @@ class Dht11(AirTempRHSensor):
     STATE_DATA_FIRST_PULL_DOWN = 3
     STATE_DATA_PULL_UP = 4
     STATE_DATA_PULL_DOWN = 5
+    MAX_SAMPLE_ITR = 6
 
     def _read(self):
         # Initialize GPIO
@@ -53,38 +54,50 @@ class Dht11(AirTempRHSensor):
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(pin, GPIO.OUT)
 
-        # send initial high
-        self._send_and_sleep(pin, GPIO.HIGH, 0.05)
+        # Sample until we get a valid result, or after trying MAX_ITR - 1 times ...
+        num_itr = 0
+        while True:
+            num_itr += 1
+            # send initial high
+            self._send_and_sleep(pin, GPIO.HIGH, 0.05)
 
-        # pull down to low
-        self._send_and_sleep(pin, GPIO.LOW, 0.02)
+            # pull down to low
+            self._send_and_sleep(pin, GPIO.LOW, 0.02)
 
-        # change to input using pull up
-        GPIO.setup(pin, GPIO.IN, GPIO.PUD_UP)
+            # change to input using pull up
+            GPIO.setup(pin, GPIO.IN, GPIO.PUD_UP)
 
-        # collect data into an array
-        data = self._collect_input(pin)
+            # collect data into an array
+            data = self._collect_input(pin)
 
-        # parse lengths of all data pull up periods
-        pull_up_lengths = self._parse_data_pull_up_lengths(data)
+            # parse lengths of all data pull up periods
+            pull_up_lengths = self._parse_data_pull_up_lengths(data)
 
-        # if bit count mismatch, return error (4 byte data + 1 byte checksum)
-        if len(pull_up_lengths) != 40:
-            return Dht11.DHT11Result(Dht11.DHT11Result.ERR_MISSING_DATA, 0, 0)
+            # if bit count mismatch, return error (4 byte data + 1 byte checksum)
+            if len(pull_up_lengths) != 40:
+                if num_itr < self.MAX_ITR:
+                    # There was an error, try again...
+                    continue
+                else:
+                    return Dht11.DHT11Result(Dht11.DHT11Result.ERR_MISSING_DATA, 0, 0)
 
-        # calculate bits from lengths of the pull up periods
-        bits = self._calculate_bits(pull_up_lengths)
+            # calculate bits from lengths of the pull up periods
+            bits = self._calculate_bits(pull_up_lengths)
 
-        # we have the bits, calculate bytes
-        the_bytes = self._bits_to_bytes(bits)
+            # we have the bits, calculate bytes
+            the_bytes = self._bits_to_bytes(bits)
 
-        # calculate checksum and check
-        checksum = self._calculate_checksum(the_bytes)
-        if the_bytes[4] != checksum:
-            return Dht11.DHT11Result(Dht11.DHT11Result.ERR_CRC, 0, 0)
+            # calculate checksum and check
+            checksum = self._calculate_checksum(the_bytes)
+            if the_bytes[4] != checksum:
+                if num_itr < self.MAX_ITR:
+                    # There was an error, try again...
+                    continue
+                else:
+                    return Dht11.DHT11Result(Dht11.DHT11Result.ERR_CRC, 0, 0)
 
-        # ok, we have valid data, return it
-        return Dht11.DHT11Result(Dht11.DHT11Result.ERR_NO_ERROR, the_bytes[2], the_bytes[0])
+            # ok, we have valid data, return it
+            return Dht11.DHT11Result(Dht11.DHT11Result.ERR_NO_ERROR, the_bytes[2], the_bytes[0])
 
     @staticmethod
     def _send_and_sleep(pin, output, sleep):
