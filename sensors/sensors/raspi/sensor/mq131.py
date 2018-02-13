@@ -10,6 +10,15 @@ from sensors.raspi.constants import *
 
 class Mq131(OzoneSensor):
     NAME = CFG_SENSOR_TYPE_MQ131
+
+    # Equation values
+    # MQ131 O3 coordinates on curve
+    PC_CURVE_0 = 42.84561841
+    PC_CURVE_1 = -1.043297135
+    RL_MQ131 = 0.679  # MQ131 Sainsmart Resistor Load value
+    RO_DEFAULT_MQ131 = 2.511  # Must be calibrated per sensor, this is used as a default
+    READ_SAMPLE_TIMES = 5  # Number of samples to read to get average
+    READ_SAMPLE_INTERVAL = 0.05
     RO_MULT = math.exp((math.log(PC_CURVE_0 / 0.010) / PC_CURVE_1))
     RESISTANCE_NUMERATOR = 1024.0 * 1000.0 * RL_MQ131
 
@@ -30,7 +39,7 @@ class Mq131(OzoneSensor):
         rs = self._mq_resistance(adc_avg)
         # Get the Ro (Clean Air) value from the average of the 5 readings
         # ro = self._measure_Ro(rs)
-        ro = RO_DEFAULT_MQ131
+        ro = Mq131.RO_DEFAULT_MQ131
         ratio = self._rs_over_ro_ratio(rs, ro)
         ppm = self._calculate_ppm_o3(ratio, ro)
         # Metadata
@@ -89,15 +98,15 @@ class Mq131(OzoneSensor):
         # Analog to Digital Conversion from the MQ3002 chip to get voltage
         # Get 5 reading to get a stable value
         adc_avg = 0.0
-        for i in range(0, READ_SAMPLE_VALUES):
+        for i in range(0, Mq131.READ_SAMPLE_TIMES):
             adc_avg += self._readadc()
-            time.sleep(READ_SAMPLE_TIME)  # Every five seconds
-            adc_avg = adc_avg / READ_SAMPLE_VALUES
+            time.sleep(Mq131.READ_SAMPLE_INTERVAL)  # Every five seconds
+            adc_avg = adc_avg / Mq131.READ_SAMPLE_TIMES
         return adc_avg
 
     def _mq_resistance(self, adc_avg):
         """Calculates the sensor resistance (Rs)"""
-        return self.RESISTANCE_NUMERATOR / (adc_avg - RL_MQ131)
+        return self.RESISTANCE_NUMERATOR / (adc_avg - Mq131.RL_MQ131)
 
     def _measure_Ro(self, rs):
         """Calculates the sensor resistance of clean air from the MQ131 sensor"""
@@ -114,7 +123,7 @@ class Mq131(OzoneSensor):
 
     def _calculate_ppm_o3(self, ratio, ro):
         """Calculate the final concentration value"""
-        return (PC_CURVE_0 * math.pow((ratio / ro), PC_CURVE_1))
+        return (Mq131.PC_CURVE_0 * math.pow((ratio / ro), Mq131.PC_CURVE_1))
 
     def __init__(self, typ, *args):
         super().__init__(typ, *args)
