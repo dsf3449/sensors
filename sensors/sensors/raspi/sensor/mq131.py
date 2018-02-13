@@ -32,13 +32,13 @@ class Mq131(OzoneSensor):
         # ro = self._measure_Ro(rs)
         ro = RO_DEFAULT_MQ131
         ratio = self._rs_over_ro_ratio(rs, ro)
-        ppb = self._calculate_ppb_o3(ratio, ro)
+        ppm = self._calculate_ppm_o3(ratio, ro)
         # Metadata
         parameters = {"voltage": str(voltage),
                       "Rs": str(rs),
                       "Ro": str(ro),
                       "Rs_Ro_Ratio": str(ratio)}
-        return ppb, parameters
+        return ppm, parameters
 
     def _readadc(self):
         adcnum = 0
@@ -110,9 +110,11 @@ class Mq131(OzoneSensor):
 
     def _calculate_ppb_o3(self, ratio, ro):
         """Calculate the final concentration value"""
-        ppm = (PC_CURVE_0 * math.pow((ratio / ro), PC_CURVE_1))
-        ppb = ppm * 1000.0
-        return ppb
+        return self._calculate_ppm_o3(ratio, ro) * 1000.0
+
+    def _calculate_ppm_o3(self, ratio, ro):
+        """Calculate the final concentration value"""
+        return (PC_CURVE_0 * math.pow((ratio / ro), PC_CURVE_1))
 
     def __init__(self, typ, *args):
         super().__init__(typ, *args)
