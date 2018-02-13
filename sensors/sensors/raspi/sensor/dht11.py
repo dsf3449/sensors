@@ -51,6 +51,9 @@ class Dht11(AirTempRHSensor):
         # Initialize GPIO
         pin = self.GPIO_PIN
         assert (pin == 17)
+        GPIO.cleanup()
+        GPIO.setwarnings(False)
+        GPIO.setmode(GPIO.BCM)
         GPIO.setup(pin, GPIO.OUT)
 
         # send initial high

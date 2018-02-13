@@ -76,11 +76,6 @@ def main():
     logger = configure_logger(config)
 
     try:
-        # GPIO setup
-        GPIO.setwarnings(False)
-        GPIO.setmode(GPIO.BCM)
-        GPIO.cleanup()
-
         sample()
     except KeyboardInterrupt:
         GPIO.cleanup()
