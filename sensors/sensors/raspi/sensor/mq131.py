@@ -19,7 +19,10 @@ class Mq131(OzoneSensor):
     RO_DEFAULT_MQ131 = 2.511  # Must be calibrated per sensor, this is used as a default
     READ_SAMPLE_TIMES = 5  # Number of samples to read to get average
     READ_SAMPLE_INTERVAL = 0.05
-    RO_MULT = math.exp((math.log(PC_CURVE_0 / 0.010) / PC_CURVE_1))
+    CALIBRATION_SAMPLE_TIMES = 50
+    CALIBRATION_SAMPLE_INTERVAL = 0.5
+
+    RO_MULT = math.exp((math.log(PC_CURVE_0 / 10.0) / PC_CURVE_1))
     RESISTANCE_NUMERATOR = 1024.0 * 1000.0 * RL_MQ131
 
     def _ozone(self):
@@ -104,14 +107,18 @@ class Mq131(OzoneSensor):
             adc_avg = adc_avg / Mq131.READ_SAMPLE_TIMES
         return adc_avg
 
-    def _mq_resistance(self, adc_avg):
+    def _mq_resistance(self, adc):
         """Calculates the sensor resistance (Rs)"""
-        return self.RESISTANCE_NUMERATOR / (adc_avg - Mq131.RL_MQ131)
+        return self.RESISTANCE_NUMERATOR / (adc - Mq131.RL_MQ131)
 
-    def _measure_Ro(self, rs):
+    def _measure_Ro(self, rl=RL_MQ131):
         """Calculates the sensor resistance of clean air from the MQ131 sensor"""
-        Ro = rs * self.RO_MULT
-        return Ro
+        val = 0
+        for i in range(Mq131.CALIBRATION_SAMPLE_TIMES):
+            val += self._mq_resistance(self._readadc())
+            time.sleep(Mq131.CALIBRATION_SAMPLE_INTERVAL)
+        val = val / Mq131.CALIBRATION_SAMPLE_TIMES
+        return val * Mq131.RO_MULT
 
     def _rs_over_ro_ratio(self, rs, ro):
         """Calculates the ratio of Rs and Ro from a sensor"""
