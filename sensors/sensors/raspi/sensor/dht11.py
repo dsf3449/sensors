@@ -79,7 +79,7 @@ class Dht11(AirTempRHSensor):
 
             # if bit count mismatch, return error (4 byte data + 1 byte checksum)
             if len(pull_up_lengths) != 40:
-                if num_itr < self.MAX_ITR:
+                if num_itr < Dht11.MAX_SAMPLE_ITR:
                     # There was an error, try again...
                     continue
                 else:
@@ -94,7 +94,7 @@ class Dht11(AirTempRHSensor):
             # calculate checksum and check
             checksum = self._calculate_checksum(the_bytes)
             if the_bytes[4] != checksum:
-                if num_itr < self.MAX_ITR:
+                if num_itr < Dht11.MAX_SAMPLE_ITR:
                     # There was an error, try again...
                     continue
                 else:
