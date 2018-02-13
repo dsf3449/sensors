@@ -12,7 +12,7 @@ def main():
     GPIO.cleanup()
 
     # read data using pin 14
-    instance = Dht11()
+    instance = Dht11("dht11", [])
     result = instance._read()
 
     if result.is_valid():
