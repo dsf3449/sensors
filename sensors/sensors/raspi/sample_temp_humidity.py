@@ -16,11 +16,12 @@ def main():
     result = instance.read()
 
     if result.is_valid():
-        print("Last valid input: " + str(datetime.datetime.now()))
-        print ("Temperature: %d C" % result.temperature)
-        print ("Temperature: %d F" % result.temperature * 1.8 + 32)
-        print("Humidity: %d %%" % result.humidity)
+        print("Last valid input: {0}".format(str(datetime.datetime.now())))
+        print ("Temperature: {0:.2f} C".format(result.temperature))
+        temp_f = result.temperature * 1.8 + 32.0
+        print ("Temperature: {0:.2f} F".format(temp_f))
+        print("Humidity: {0:.2%}".format(result.humidity))
     else:
-        print("Error: %d" % result.error_code)
+        print("Error: {0}".format(result.error_code))
 
     time.sleep(1)
