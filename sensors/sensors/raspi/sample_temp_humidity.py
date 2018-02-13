@@ -20,7 +20,7 @@ def main():
         print ("Temperature: {0:.2f} C".format(result.temperature))
         temp_f = result.temperature * 1.8 + 32.0
         print ("Temperature: {0:.2f} F".format(temp_f))
-        print("Humidity: {0:.2%}".format(result.humidity))
+        print("Humidity: {0:.2f}%".format(result.humidity))
     else:
         print("Error: {0}".format(result.error_code))
 
