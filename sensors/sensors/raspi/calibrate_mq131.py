@@ -9,6 +9,7 @@ def main():
     GPIO.setmode(GPIO.BCM)
     GPIO.cleanup()
 
-    instance = get_sensor_instance("mq131", [ObservedProperty("ozone", "dummmydatastreamid")])
+    print("Calibrating MQ131 sensor...")
+    instance = get_sensor_instance("mq131", ObservedProperty("ozone", "dummmydatastreamid"))
     result = instance._measure_Ro()
     print("Ro value for MQ131 sensor is {0}".format(result))
