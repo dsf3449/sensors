@@ -1,3 +1,35 @@
+"""
+Licensed under GNU Lesser General Public License v3.0 (LGPLv3);
+you may not use this file except in compliance with the License.
+
+This software is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public License
+v3.0 as published by the Free Software Foundation.
+
+This software is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License v3.0 for more details.
+
+You can receive a copy of the GNU Lesser General Public License
+from: https://www.gnu.org/licenses/lgpl-3.0.en.html
+
+
+Original license:
+
+From: https://github.com/szazo/DHT11_Python
+
+MIT License
+
+Copyright (c) 2016 Zoltan Szarvas
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+"""
+
 import time
 
 import RPi.GPIO as GPIO
@@ -28,7 +60,7 @@ class Dht11(AirTempRHSensor):
         GPIO.setup(self.GPIO_PIN, GPIO.IN, GPIO.PUD_UP)
 
         # collect data into an array
-        data = self._collect_input()
+        data = self._collect_input(self.GPIO_PIN)
 
         # parse lengths of all data pull up periods
         pull_up_lengths = self._parse_data_pull_up_lengths(data)
