@@ -14,9 +14,9 @@ class Mq131(OzoneSensor):
     RESISTANCE_NUMERATOR = 1024.0 * 1000.0 * RL_MQ131
 
     def _ozone(self):
-        # Logical GPIO numbering schema
+        # Initialize GPIO
+        GPIO.cleanup()
         GPIO.setmode(GPIO.BCM)
-
         # set up the SPI interface pins
         GPIO.setup(SPI_MOSI, GPIO.OUT)
         GPIO.setup(SPI_MISO, GPIO.IN)
