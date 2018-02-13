@@ -25,7 +25,7 @@ class Mq131(OzoneSensor):
     RO_MULT = math.exp((math.log(PC_CURVE_0 / 10.0) / PC_CURVE_1))
     RESISTANCE_NUMERATOR = 1024.0 * 1000.0 * RL_MQ131
 
-    def _ozone(self):
+    def _initialize_gpio(self):
         # Initialize GPIO
         GPIO.setmode(GPIO.BCM)
         # set up the SPI interface pins
@@ -33,6 +33,9 @@ class Mq131(OzoneSensor):
         GPIO.setup(SPI_MISO, GPIO.IN)
         GPIO.setup(SPI_CLK, GPIO.OUT)
         GPIO.setup(SPI_CS, GPIO.OUT)
+
+    def _ozone(self):
+        self._initialize_gpio()
 
         # Average of 5 readings
         adc_avg = self._adc_average()
@@ -113,6 +116,8 @@ class Mq131(OzoneSensor):
 
     def _measure_Ro(self, rl=RL_MQ131):
         """Calculates the sensor resistance of clean air from the MQ131 sensor"""
+        self._initialize_gpio()
+
         val = 0
         for i in range(Mq131.CALIBRATION_SAMPLE_TIMES):
             val += self._mq_resistance(self._readadc())
