@@ -10,19 +10,20 @@ from sensors.raspi.constants import *
 
 class Mq131(OzoneSensor):
     NAME = CFG_SENSOR_TYPE_MQ131
+    PROPERTY_RO = 'Ro'
 
     # Equation values
     # MQ131 O3 coordinates on curve
     PC_CURVE_0 = 42.84561841
     PC_CURVE_1 = -1.043297135
     RL_MQ131 = 0.679  # MQ131 Sainsmart Resistor Load value
-    RO_DEFAULT_MQ131 = 2.511  # Must be calibrated per sensor, this is used as a default
+    RO_DEFAULT_MQ131 = 2501  # Must be calibrated per sensor, this is used as a default
     READ_SAMPLE_TIMES = 5  # Number of samples to read to get average
     READ_SAMPLE_INTERVAL = 0.05
     CALIBRATION_SAMPLE_TIMES = 50
     CALIBRATION_SAMPLE_INTERVAL = 0.5
 
-    RO_MULT = math.exp((math.log(PC_CURVE_0 / 10.0) / PC_CURVE_1))
+    RO_MULT = math.exp((math.log(PC_CURVE_0 / 0.01) / PC_CURVE_1))
     RESISTANCE_NUMERATOR = 1024.0 * 1000.0 * RL_MQ131
 
     def _initialize_gpio(self):
@@ -44,14 +45,12 @@ class Mq131(OzoneSensor):
         # Get the Rs value (O3 concentration) from the average of the 5 readings
         rs = self._mq_resistance(adc_avg)
         # Get the Ro (Clean Air) value from the average of the 5 readings
-        # ro = self._measure_Ro(rs)
-        ro = Mq131.RO_DEFAULT_MQ131
-        ratio = self._rs_over_ro_ratio(rs, ro)
-        ppm = self._calculate_ppm_o3(ratio, ro)
+        ratio = self._rs_over_ro_ratio(rs, self.r_o)
+        ppm = self._calculate_ppm_o3(ratio, self.r_o)
         # Metadata
         parameters = {"voltage": str(voltage),
                       "Rs": str(rs),
-                      "Ro": str(ro),
+                      "Ro": str(self.r_o),
                       "Rs_Ro_Ratio": str(ratio)}
         return ppm, parameters
 
@@ -118,7 +117,7 @@ class Mq131(OzoneSensor):
         """Calculates the sensor resistance of clean air from the MQ131 sensor"""
         self._initialize_gpio()
 
-        val = 0
+        val = 0.0
         for i in range(Mq131.CALIBRATION_SAMPLE_TIMES):
             val += self._mq_resistance(self._readadc())
             time.sleep(Mq131.CALIBRATION_SAMPLE_INTERVAL)
@@ -137,5 +136,6 @@ class Mq131(OzoneSensor):
         """Calculate the final concentration value"""
         return (Mq131.PC_CURVE_0 * math.pow((ratio / ro), Mq131.PC_CURVE_1))
 
-    def __init__(self, typ, *args):
-        super().__init__(typ, *args)
+    def __init__(self, typ, *args, **kwargs):
+        super().__init__(typ, *args, **kwargs)
+        self.r_o = float(self.properties.get(Mq131.PROPERTY_RO), Mq131.RO_DEFAULT_MQ131)

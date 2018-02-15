@@ -15,5 +15,5 @@ class Mq131(OzoneSensor):
                       "Rs_Ro_Ratio": str(random.uniform(1.23, 123.45))}
         return result, parameters
 
-    def __init__(self, typ, *args):
-        super().__init__(typ, *args)
+    def __init__(self, typ, *args, **kwargs):
+        super().__init__(typ, *args, **kwargs)

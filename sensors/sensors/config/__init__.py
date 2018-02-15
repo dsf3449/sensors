@@ -132,7 +132,13 @@ class Config():
                     from sensors.domain import get_sensor_instance_simulator as get_sensor_instance
                 else:
                     from sensors.domain import get_sensor_instance
-                sensor_objects.append(get_sensor_instance(sensor_type, *op_objects))
+
+                properties = get_config_element(CFG_PROPERTIES, s, CFG_SENSOR, optional=True)
+                if properties is None:
+                    properties = {}
+
+                sensor_objects.append(get_sensor_instance(sensor_type, *op_objects, **properties))
+
 
             if len(sensor_objects) < 1:
                 _raise_config_error("No valid sensors defined in YAML {0}".format(yaml_path))

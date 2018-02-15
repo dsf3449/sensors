@@ -29,6 +29,7 @@ CFG_SENSOR = 'sensor'
 CFG_SENSOR_TYPE_MQ131 = 'mq131'
 CFG_SENSOR_TYPE_DHT11 = 'dht11'
 
+CFG_PROPERTIES = 'properties'
 CFG_OBSERVED_PROPERTIES = 'observed_properties'
 CFG_OBSERVED_PROPERTY = 'observed_property'
 CFG_OBSERVED_PROPERTY_OZONE = 'ozone'

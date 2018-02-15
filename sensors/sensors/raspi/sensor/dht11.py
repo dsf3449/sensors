@@ -233,8 +233,8 @@ class Dht11(AirTempRHSensor):
     def _calculate_checksum(the_bytes):
         return the_bytes[0] + the_bytes[1] + the_bytes[2] + the_bytes[3] & 255
 
-    def __init__(self, typ, *args):
-        super().__init__(typ, *args)
+    def __init__(self, typ, *args, **kwargs):
+        super().__init__(typ, *args, **kwargs)
 
     class DHT11Result(AirTempRHSensor.AirTempRHResult):
         ERR_NO_ERROR = 0

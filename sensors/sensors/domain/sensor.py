@@ -6,10 +6,11 @@ from sensors.domain.observation import Observation
 
 
 class Sensor:
-    def __init__(self, typ, *args):
+    def __init__(self, typ, *args, **kwargs):
         self.typ = typ
         self.observed_properties = list(args)
         self.obs_func_tab = {}
+        self.properties = dict(kwargs)
 
     def generate_observations(self,
                               phenomenon_time=None,
@@ -56,8 +57,8 @@ class OzoneSensor(Sensor):
     def _ozone(self):
         raise NotImplementedError
 
-    def __init__(self, typ, *args):
-        super().__init__(typ, *args)
+    def __init__(self, typ, *args, **kwargs):
+        super().__init__(typ, *args, **kwargs)
 
         # Validate observed properties
         if len(args) != 1:
@@ -101,8 +102,8 @@ class AirTempRHSensor(Sensor):
         parameters = {"T_air": result.temperature}
         return result.humidity, parameters
 
-    def __init__(self, typ, *args):
-        super().__init__(typ, *args)
+    def __init__(self, typ, *args, **kwargs):
+        super().__init__(typ, *args, **kwargs)
 
         self.previous_result = None
 

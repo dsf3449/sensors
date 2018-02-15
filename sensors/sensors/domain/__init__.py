@@ -9,19 +9,19 @@ from sensors.simulator.sensor import mq131 as sim_mq131
 from sensors.simulator.sensor import dht11 as sim_dht11
 
 
-def get_sensor_instance_simulator(typ, *args):
+def get_sensor_instance_simulator(typ, *args, **kwargs):
     if typ == CFG_SENSOR_TYPE_MQ131:
-        return sim_mq131.Mq131(typ, *args)
+        return sim_mq131.Mq131(typ, *args, **kwargs)
     elif typ == CFG_SENSOR_TYPE_DHT11:
-        return sim_dht11.Dht11(typ, *args)
+        return sim_dht11.Dht11(typ, *args, **kwargs)
     else:
         raise ValueError("Unknown sensor type {0}".format(typ))
 
 
-def get_sensor_instance(typ, *args):
+def get_sensor_instance(typ, *args, **kwargs):
     if typ == CFG_SENSOR_TYPE_MQ131:
-        return mq131.Mq131(typ, *args)
+        return mq131.Mq131(typ, *args, **kwargs)
     elif typ == CFG_SENSOR_TYPE_DHT11:
-        return dht11.Dht11(typ, *args)
+        return dht11.Dht11(typ, *args, **kwargs)
     else:
         raise ValueError("Unknown sensor type {0}".format(typ))
