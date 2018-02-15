@@ -139,4 +139,4 @@ class Mq131(OzoneSensor):
 
     def __init__(self, typ, *args, **kwargs):
         super().__init__(typ, *args, **kwargs)
-        self.r_o = float(self.properties.get(Mq131.PROPERTY_RO), Mq131.RO_DEFAULT_MQ131)
+        self.r_o = float(self.properties.get(Mq131.PROPERTY_RO, Mq131.RO_DEFAULT_MQ131))
