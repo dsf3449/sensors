@@ -18,6 +18,7 @@ sensors:
         datastream_id: 1af6b695-07c0-4024-aeb8-4ddf64dbf458
     properties:
       - Ro: 2522.51
+      - foo: bar
   - type: dht11
     observed_properties:
       - name: air_temperature

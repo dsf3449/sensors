@@ -1,5 +1,5 @@
-import os
 import io
+from collections import ChainMap
 
 from sensors.common.constants import *
 from sensors.config.constants import *
@@ -133,9 +133,10 @@ class Config():
                 else:
                     from sensors.domain import get_sensor_instance
 
-                properties = get_config_element(CFG_PROPERTIES, s, CFG_SENSOR, optional=True)
-                if properties is None:
-                    properties = {}
+                properties_list = get_config_element(CFG_PROPERTIES, s, CFG_SENSOR, optional=True)
+                properties = {}
+                if properties_list is not None:
+                    properties = ChainMap(*properties_list)
 
                 sensor_objects.append(get_sensor_instance(sensor_type, *op_objects, **properties))
 
