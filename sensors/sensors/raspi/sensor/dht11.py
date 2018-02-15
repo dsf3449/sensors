@@ -32,7 +32,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 import time
 
-import RPi.GPIO as GPIO
+from sensors.raspi import import_raspi_gpio
+GPIO = import_raspi_gpio()
 
 from sensors.domain.sensor import AirTempRHSensor
 from sensors.config.constants import *

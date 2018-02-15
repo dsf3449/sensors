@@ -196,6 +196,6 @@ def get_config_element(element_name, container, container_name, optional=False):
         _raise_config_error("{container_name} {container} does not contain element {element_name}".\
                             format(container_name=container_name, container=str(container),
                             element_name=element_name))
-    else:
+    elif element_name in container:
         element = container[element_name]
     return element

@@ -1,7 +1,8 @@
 import math
 import time
 
-import RPi.GPIO as GPIO
+from sensors.raspi import import_raspi_gpio
+GPIO = import_raspi_gpio()
 
 from sensors.domain.sensor import OzoneSensor
 from sensors.config.constants import *
