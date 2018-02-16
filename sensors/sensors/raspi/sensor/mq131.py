@@ -24,7 +24,7 @@ class Mq131(OzoneSensor):
     CALIBRATION_SAMPLE_TIMES = 50
     CALIBRATION_SAMPLE_INTERVAL = 0.5
 
-    RO_MULT = math.exp((math.log(PC_CURVE_0 / 0.01) / PC_CURVE_1))
+    RO_MULT = math.exp((math.log(PC_CURVE_0 / 10) / PC_CURVE_1))
     RESISTANCE_NUMERATOR = 1024.0 * 1000.0 * RL_MQ131
 
     def _initialize_gpio(self):
