@@ -113,8 +113,7 @@ setup(
             'sensor_transmit=sensors.network.transmit:main',
             'sensor_simulator=sensors.simulator.sample:main',
             'calibrate_mq131=sensors.raspi.calibrate_mq131:main',
-            'sample_dht=sensors.raspi.sample_temp_humidity:main',
-            'sample_dht2=sensors.raspi.sample_temp_humidity2:main'
+            'sample_dht=sensors.raspi.sample_temp_humidity:main'
         ],
     },
 )

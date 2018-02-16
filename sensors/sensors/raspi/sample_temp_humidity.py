@@ -3,7 +3,7 @@ import time
 
 import RPi.GPIO as GPIO
 
-import sensors.raspi.dht11 as dht11
+from sensors.domain import get_sensor_instance
 
 def main():
     # initialize GPIO
@@ -12,8 +12,8 @@ def main():
     GPIO.cleanup()
 
     # read data using pin 14
-    instance = dht11.DHT11(pin=17)
-    result = instance.read()
+    instance = get_sensor_instance("dht11", [])
+    result = instance._read()
 
     if result.is_valid():
         print("Last valid input: {0}".format(str(datetime.datetime.now())))
