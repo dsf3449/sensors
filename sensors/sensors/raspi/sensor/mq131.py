@@ -18,7 +18,7 @@ class Mq131(OzoneSensor):
     PC_CURVE_0 = 42.84561841
     PC_CURVE_1 = -1.043297135
     RL_MQ131 = 0.679  # MQ131 Sainsmart Resistor Load value
-    RO_DEFAULT_MQ131 = 2501  # Must be calibrated per sensor, this is used as a default
+    RO_DEFAULT_MQ131 = 2.501  # Must be calibrated per sensor, this is used as a default
     READ_SAMPLE_TIMES = 5  # Number of samples to read to get average
     READ_SAMPLE_INTERVAL = 0.05
     CALIBRATION_SAMPLE_TIMES = 50
