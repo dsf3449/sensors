@@ -1,3 +1,10 @@
+"""
+Driver for MQ131 gas sensor for Raspberry Pi 3 with MCP3002 ADC.
+This driver is based on the Arduino driver that can be found here:
+    https://github.com/empierre/arduino/blob/master/AirQuality-Multiple_Gas_Sensor1_4.ino
+MCP3002-specific code based on:
+    https://dmt195.wordpress.com/2012/09/26/mcp3002-example-code-for-raspberry-pi-adc-through-spi/
+"""
 import math
 import time
 
