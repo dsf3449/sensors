@@ -17,7 +17,7 @@ sensors:
       - name: ozone
         datastream_id: 1af6b695-07c0-4024-aeb8-4ddf64dbf458
     properties:
-      - Ro: 2522.51
+      - Ro: 2.5225
       - foo: bar
   - type: dht11
     observed_properties:
