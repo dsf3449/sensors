@@ -123,7 +123,9 @@ class Mq131(OzoneSensor):
             val += self._mq_resistance(self._readadc())
             time.sleep(Mq131.CALIBRATION_SAMPLE_INTERVAL)
         val = val / Mq131.CALIBRATION_SAMPLE_TIMES
-        return val * Mq131.RO_MULT
+        # Divide final result by 1000 to be consistent with Ro value scale used
+        # reference Arduino driver
+        return val * Mq131.RO_MULT / 1000.0
 
     def _rs_over_ro_ratio(self, rs, ro):
         """Calculates the ratio of Rs and Ro from a sensor"""
