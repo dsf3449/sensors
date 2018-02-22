@@ -1,3 +1,4 @@
+import os, argparse
 import sched
 import time
 
@@ -11,6 +12,14 @@ SCHEDULE_PRIORITY_DEFAULT = 1
 
 
 def main():
+    parser = argparse.ArgumentParser(description='Test Raspberry Pi sensors')
+    parser.add_argument('-c', '--config', type=str, required=False)
+    args = parser.parse_args()
+
+    if args.config is not None:
+        assert (os.path.exists(args.config))
+        os.environ[ENV_YAML_PATH] = args.config
+
     config = Config().config
     global logger
     logger = configure_logger(config)
