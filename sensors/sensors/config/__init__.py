@@ -1,25 +1,19 @@
+import os
 import io
 from collections import ChainMap
 
+from .util import *
 from sensors.common.constants import *
 from sensors.config.constants import *
 from sensors.domain.observed_property import *
 from sensors.domain.thing import *
 from sensors.domain.transport import *
+from sensors.domain import get_transport_instance
 
 from ruamel import yaml
 
 
-class ConfigurationError(Exception):
-    """Exception raised for errors in configuration
-
-    """
-
-    def __init__(self, message):
-        self.message = message
-
-
-class Config():
+class Config:
 
     class __Config:
         def __init__(self):
@@ -33,35 +27,35 @@ class Config():
             """
             yaml_path = os.environ.get(ENV_YAML_PATH)
             if yaml_path is None:
-                _raise_config_error("No configuration file defined, please make sure environment variable {0} is set".\
-                                    format(ENV_YAML_PATH))
+                raise_config_error("No configuration file defined, please make sure environment variable {0} is set".
+                                   format(ENV_YAML_PATH))
             config_raw = None
             with io.open(yaml_path, 'r') as f:
                 config_raw = yaml.safe_load(f)
 
             # First-order error checking of raw config
             if config_raw is None:
-                _raise_config_error("Unable to parse configuration in YAML {0}.".format(yaml_path))
+                raise_config_error("Unable to parse configuration in YAML {0}.".format(yaml_path))
             if CFG_THING not in config_raw:
-                _raise_config_error("Element {0} not configured in YAML {1}.".format(CFG_THING,
+                raise_config_error("Element {0} not configured in YAML {1}.".format(CFG_THING,
                                                                                      yaml_path))
             if CFG_SENSORS not in config_raw:
-                _raise_config_error("Element {0} not configured in YAML {1}.". \
-                                    format(CFG_SENSORS, yaml_path))
+                raise_config_error("Element {0} not configured in YAML {1}.".
+                                   format(CFG_SENSORS, yaml_path))
             sensors = config_raw[CFG_SENSORS]
             if type(sensors) != list:
-                _raise_config_error("Element {0} with value {1} is invalid in YAML {2}.". \
-                                    format(CFG_SENSORS, str(sensors), yaml_path))
+                raise_config_error("Element {0} with value {1} is invalid in YAML {2}.".
+                                   format(CFG_SENSORS, str(sensors), yaml_path))
             if len(sensors) < 1:
-                _raise_config_error("Element {0} not configured in YAML {1}.".format(CFG_SENSORS,
-                                                                                     yaml_path))
+                raise_config_error("Element {0} not configured in YAML {1}.".format(CFG_SENSORS,
+                                                                                    yaml_path))
             if CFG_TRANSPORTS not in config_raw:
-                _raise_config_error("Element {0} not configured in YAML {1}.".format(CFG_TRANSPORTS,
-                                                                                     yaml_path))
+                raise_config_error("Element {0} not configured in YAML {1}.".format(CFG_TRANSPORTS,
+                                                                                    yaml_path))
             transports = config_raw[CFG_TRANSPORTS]
             if type(transports) != list:
-                _raise_config_error("Element {0} with value {1} is invalid in YAML {2}.". \
-                                    format(CFG_TRANSPORTS, str(transports), yaml_path))
+                raise_config_error("Element {0} with value {1} is invalid in YAML {2}.".
+                                   format(CFG_TRANSPORTS, str(transports), yaml_path))
 
             # Convert raw config elements to ones easier to deal with (doing
             # validation along the way).
@@ -86,7 +80,7 @@ class Config():
                     logger_path = DEFAULT_LOGGER_PATH
             logger_path_dir = os.path.dirname(logger_path)
             if not os.path.exists(logger_path_dir):
-                raise _raise_config_error("Logger path directory {0} does not exist.".format(logger_path_dir))
+                raise raise_config_error("Logger path directory {0} does not exist.".format(logger_path_dir))
             c[CFG_LOGGING_LOGGER_PATH] = logger_path
 
             # Spooler
@@ -98,7 +92,7 @@ class Config():
                     db_path = DEFAULT_DB_PATH
             db_path_dir = os.path.dirname(db_path)
             if not os.path.exists(db_path_dir):
-                raise _raise_config_error("Spooler path directory {0} does not exist.".format(db_path_dir))
+                raise raise_config_error("Spooler path directory {0} does not exist.".format(db_path_dir))
             c[CFG_SPOOLER_DB_PATH] = db_path
 
             # Thing
@@ -112,22 +106,22 @@ class Config():
                 sensor_type = get_config_element(CFG_TYPE, s, CFG_SENSOR)
                 observed_properties = get_config_element(CFG_OBSERVED_PROPERTIES, s, CFG_SENSOR)
                 if len(observed_properties) < 1:
-                    _raise_config_error("No observed properties defined in sensor {0} in YAML {1}". \
-                                        format(str(s), yaml_path))
+                    raise_config_error("No observed properties defined in sensor {0} in YAML {1}".
+                                       format(str(s), yaml_path))
                 op_objects = []
                 for op in observed_properties:
                     op_name = get_config_element(CFG_NAME, op, CFG_OBSERVED_PROPERTY)
                     op_ds_id = get_config_element(CFG_DATASTREAM_ID, op, CFG_OBSERVED_PROPERTY)
                     # Make sure this datastream_id hasn't already been encountered
                     if op_ds_id in ds_id_present:
-                        _raise_config_error("Datastream with ID {0} is specified more than once in YAML {1}". \
-                                            format(op_ds_id, yaml_path))
+                        raise_config_error("Datastream with ID {0} is specified more than once in YAML {1}".
+                                           format(op_ds_id, yaml_path))
                     else:
                         ds_id_present.add(op_ds_id)
                     op_objects.append(ObservedProperty(op_name, op_ds_id))
                 if len(op_objects) < 1:
-                    _raise_config_error("No valid observed properties defined in sensor {0} in YAML {1}". \
-                                        format(str(s), yaml_path))
+                    raise_config_error("No valid observed properties defined in sensor {0} in YAML {1}".
+                                       format(str(s), yaml_path))
                 if simulator_enabled:
                     from sensors.domain import get_sensor_instance_simulator as get_sensor_instance
                 else:
@@ -140,9 +134,8 @@ class Config():
 
                 sensor_objects.append(get_sensor_instance(sensor_type, *op_objects, **properties))
 
-
             if len(sensor_objects) < 1:
-                _raise_config_error("No valid sensors defined in YAML {0}".format(yaml_path))
+                raise_config_error("No valid sensors defined in YAML {0}".format(yaml_path))
 
             c[CFG_SENSORS] = sensor_objects
 
@@ -153,19 +146,19 @@ class Config():
                 transport_type = get_config_element(CFG_TYPE, t, CFG_TRANSPORT)
                 properties = get_config_element(CFG_PROPERTIES, t, CFG_TRANSPORT)
                 if len(properties) < 1:
-                    _raise_config_error("No properties defined in transport with type {0} in YAML {1}". \
-                                        format(transport_type, yaml_path))
-                transport_object = Transport.get_instance(transport_type, **properties)
+                    raise_config_error("No properties defined in transport with type {0} in YAML {1}".
+                                       format(transport_type, yaml_path))
+                transport_object = get_transport_instance(transport_type, **properties)
                 t_identifier = transport_object.identifier()
                 if t_identifier in transport_present:
-                    _raise_config_error("Transport with identifier {0} is specified more than once in YAML {1}". \
-                                        format(t_identifier, yaml_path))
+                    raise_config_error("Transport with identifier {0} is specified more than once in YAML {1}".
+                                       format(t_identifier, yaml_path))
                 else:
                     transport_present.add(t_identifier)
                 transport_objects.append(transport_object)
 
             if len(transport_objects) < 1:
-                _raise_config_error("No valid transports defined in YAML {0}".format(yaml_path))
+                raise_config_error("No valid transports defined in YAML {0}".format(yaml_path))
 
             c[CFG_TRANSPORTS] = transport_objects
 
@@ -184,19 +177,3 @@ class Config():
 
     def __getattr__(self, item):
         return getattr(self.instance, item)
-
-
-def _raise_config_error(mesg: str):
-    logging.error(mesg)
-    raise ConfigurationError(mesg)
-
-
-def get_config_element(element_name, container, container_name, optional=False):
-    element = None
-    if (element_name not in container) and optional is False:
-        _raise_config_error("{container_name} {container} does not contain element {element_name}".\
-                            format(container_name=container_name, container=str(container),
-                            element_name=element_name))
-    elif element_name in container:
-        element = container[element_name]
-    return element

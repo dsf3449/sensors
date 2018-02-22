@@ -8,6 +8,10 @@ from sensors.raspi.sensor import dht11
 from sensors.simulator.sensor import mq131 as sim_mq131
 from sensors.simulator.sensor import dht11 as sim_dht11
 
+# Transports
+from sensors.domain.transport import Transport
+from sensors.transport.https import HttpsTransport
+
 
 def get_sensor_instance_simulator(typ, *args, **kwargs):
     if typ == CFG_SENSOR_TYPE_MQ131:
@@ -25,3 +29,10 @@ def get_sensor_instance(typ, *args, **kwargs):
         return dht11.Dht11(typ, *args, **kwargs)
     else:
         raise ValueError("Unknown sensor type {0}".format(typ))
+
+
+def get_transport_instance(typ, **kwargs):
+    if typ == Transport.TRANSPORT_TYPE_HTTPS:
+        return HttpsTransport(typ, **kwargs)
+    else:
+        raise ValueError("Unknown transport {0}".format(typ))

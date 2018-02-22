@@ -29,3 +29,6 @@ transports:
       url: https://myservice.com/v1.0/
       jwt_id: 6d770f60-9912-4545-9d3c-9e8dcf4a0dad
       jwt_key: faac9ce4-fd2d-476b-9984-aee2b71dfc8e
+      jwt_token_ttl_minutes: 15
+      transmit_interval_seconds: 15
+      verify_ssl: false

@@ -1,11 +1,12 @@
 import os
 import unittest
+from datetime import timedelta
 
 from sensors.config.constants import *
 from sensors.config import Config, ConfigurationError
 from sensors.domain.sensor import Sensor
 from sensors.domain.observed_property import ObservedProperty
-from sensors.domain.transport import HttpsTransport
+from sensors.transport.https import HttpsTransport
 
 
 class TestConfiguration(unittest.TestCase):
@@ -68,6 +69,9 @@ class TestConfiguration(unittest.TestCase):
         self.assertEqual('https://myservice.com/v1.0/', t.url())
         self.assertEqual('6d770f60-9912-4545-9d3c-9e8dcf4a0dad', t.jwt_id())
         self.assertEqual('faac9ce4-fd2d-476b-9984-aee2b71dfc8e', t.jwt_key())
+        self.assertEqual(timedelta(minutes=15), t.jwt_token_ttl_minutes())
+        self.assertEqual(15, t.transmit_interval_seconds())
+        self.assertEqual(False, t.verify_ssl())
 
     def test_config_one_ro(self):
         os.environ[ENV_YAML_PATH] = '../data/config1_Ro.yml'
