@@ -53,7 +53,7 @@ def sample():
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Simulate a sensor')
+    parser = argparse.ArgumentParser(description='Test Raspberry Pi sensors')
     parser.add_argument('-c', '--config', type=str, required=False)
     parser.add_argument('-t', '--configtest', action='store_true')
     args = parser.parse_args()
