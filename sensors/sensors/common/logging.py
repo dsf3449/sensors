@@ -9,7 +9,7 @@ loggers = {}
 def get_instance():
     # Avoid circular import
     from sensors.config import Config
-    return configure_logger(Config.config)
+    return configure_logger(Config().config)
 
 
 def configure_logger(c):
