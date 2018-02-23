@@ -120,7 +120,8 @@ class HttpsTransport(Transport):
                     "Unable to authenticate to {0} due to error: {1}".format(url, str(e)))
             self.logger.debug(("Transmitter: Auth status code was {0}".format(r.status_code)))
             if r.status_code != 200:
-                raise AuthenticationException("Authentication failed with status code {0}".format(str(r.status_code)))
+                raise AuthenticationException("Authentication to URL {0} failed with status code {1}".
+                                              format(url, str(r.status_code)))
             else:
                 new_token = (r.json()["token"], datetime.datetime.utcnow())
             self.jwt_token = new_token
