@@ -4,7 +4,6 @@ import requests
 from requests_toolbelt.adapters import host_header_ssl
 from requests.exceptions import ConnectionError
 
-from sensors.common import logging
 from sensors.domain.transport import Transport
 from sensors.config.constants import *
 from sensors.config import get_config_element
@@ -43,10 +42,16 @@ class HttpsTransport(Transport):
         if not self.verify_ssl():
             self.session.mount('https://', host_header_ssl.HostHeaderSSLAdapter())
         self.auth_ttl = self.jwt_token_ttl_minutes()
+        self.logger = None
 
-        self.logger = logging.get_instance()
+    def _init_logger(self):
+        if self.logger is None:
+            # Avoid circular imports
+            from sensors.common import logging
+            self.logger = logging.get_instance()
 
     def transmit(self, repo: SqliteRepository):
+        self._init_logger()
         obs = repo.get_observations()
         self.logger.debug("Transmitter: read {0} observations from DB.".format(len(obs)))
         if len(obs) > 0:
@@ -88,6 +93,7 @@ class HttpsTransport(Transport):
             self.logger.debug(mesg)
 
     def _jwt_authenticate(self):
+        self._init_logger()
         new_token = self.jwt_token
         auth_required = False
 
