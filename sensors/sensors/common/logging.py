@@ -2,12 +2,13 @@ import logging
 
 from sensors.common import constants
 from sensors.config.constants import CFG_LOGGING_LOGGER_PATH
-from sensors.config import Config
 
 loggers = {}
 
 
 def get_instance():
+    # Avoid circular import
+    from sensors.config import Config
     return configure_logger(Config.config)
 
 

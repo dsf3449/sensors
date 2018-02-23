@@ -1,5 +1,4 @@
 from sensors.config.constants import *
-from sensors.persistence.sqlite import SqliteRepository
 
 
 class Transport:
@@ -13,7 +12,7 @@ class Transport:
     def identifier(self) -> str:
         raise NotImplementedError
 
-    def transmit(self, repo: SqliteRepository):
+    def transmit(self, repo):
         raise NotImplementedError
 
     def transmit_interval_seconds(self) -> int:

@@ -1,6 +1,5 @@
 import sqlite3
 
-from sensors.config import Config
 from sensors.config.constants import CFG_SPOOLER_DB_PATH
 from sensors.domain.observation import Observation
 
@@ -33,7 +32,7 @@ class SqliteRepository:
             action(conn)
             conn.commit()
 
-    def __init__(self, config: Config):
+    def __init__(self, config):
         self.db_path = config[CFG_SPOOLER_DB_PATH]
         self._perform_action_with_connection(SqliteRepository._create_tables)
 
