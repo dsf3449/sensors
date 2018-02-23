@@ -12,12 +12,13 @@ from sensors.persistence.sqlite import SqliteRepository
 
 
 class HttpsTransport(Transport):
-    """HTTPS transport with JWT authentication
+    """SensorThings API HTTPS transport with JWT authentication
 
     """
-    DEFAULT_JWT_TTL = "15"
-    DEFAULT_TRANSMIT_INTERVAL_SECONDS = "15"
-    DEFAULT_VERIFY_SSL = "true"
+    DEFAULT_JWT_TTL = '15'
+    DEFAULT_TRANSMIT_INTERVAL_SECONDS = '15'
+    DEFAULT_VERIFY_SSL = 'true'
+    STA_POST_PATH = '/CreateObservations'
 
     SUCCESS_STATUS_CODE = 201
     ERROR_RESPONSE = 'error'
@@ -61,12 +62,12 @@ class HttpsTransport(Transport):
             self.logger.debug("Transmitter: JSON payload: {0}".format(json))
             # POST observations
             self._jwt_authenticate()
-
+            url = self._join_path_to_url(self.url(), self.STA_POST_PATH)
             headers = {'Content-Type': 'application/json',
                        'Authorization': "Bearer {token}".format(token=self.jwt_token[0])}
-            self.logger.debug("Transmitter: Posting data to {0}...".format(self.url()))
+            self.logger.debug("Transmitter: Posting data to {0}...".format(url))
             try:
-                r = self.session.post(self.url(), headers=headers, data=json, verify=self.verify_ssl())
+                r = self.session.post(url, headers=headers, data=json, verify=self.verify_ssl())
             except ConnectionError as e:
                 raise TransmissionException("POST failed due to error: {0}".format(str(e)))
             self.logger.debug("Transmitter: Status code was {0}".format(r.status_code))
@@ -123,8 +124,18 @@ class HttpsTransport(Transport):
                 raise AuthenticationException("Authentication to URL {0} failed with status code {1}".
                                               format(url, str(r.status_code)))
             else:
-                new_token = (r.json()["token"], datetime.datetime.utcnow())
+                new_token = (r.json()["token"], datetime.utcnow())
             self.jwt_token = new_token
+
+    @staticmethod
+    def _join_path_to_url(url, path):
+        final_url = url
+        if final_url[-1] != '/' and path[0] != '/':
+            final_url += '/'
+        elif final_url[-1] == '/' and path[0] == '/':
+            final_url = final_url.strip('/')
+        final_url += path
+        return final_url
 
     def identifier(self) -> str:
         return Transport.IDENTIFIER_SEPARATOR.join((self.typ, self.properties[CFG_URL]))
