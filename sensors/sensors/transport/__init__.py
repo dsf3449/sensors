@@ -27,12 +27,25 @@ JSON_DATASTREAM = ('{{"Datastream":{{"@iot.id":"{datastreamId}"}},'
                    '"dataArray":[{dataArray}]'
                    '}}')
 
+JSON_DATASTREAM_NO_FOI = ('{{"Datastream":{{"@iot.id":"{datastreamId}"}},'
+                   '"components":["phenomenonTime","result","parameters"],'
+                   '"dataArray@iot.count":{count},'
+                   '"dataArray":[{dataArray}]'
+                   '}}')
+
 JSON_DATA_ARRAY_ELEM = ('['
                         '"{phenomenonTime}",'
                         '{result},'
                         '"{featureOfInterestId}",'
                         '{{{parameters}}}'
                         ']')
+
+JSON_DATA_ARRAY_ELEM_NO_FOI = ('['
+                        '"{phenomenonTime}",'
+                        '{result},'
+                        '{{{parameters}}}'
+                        ']')
+
 
 
 def observations_to_json(observations_dict):

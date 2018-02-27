@@ -38,7 +38,6 @@ def generate_observations_minute(queue):
     logger = configure_logger(config)
     logger.debug("Begin generate_observations_minute...")
     thing = config[CFG_THING]
-    foi_id = thing.location_id
 
     # Iterate over sensors and generate observations
     sensors = config[CFG_SENSORS]
@@ -46,8 +45,7 @@ def generate_observations_minute(queue):
     for s in sensors:
         logger.debug(str(s))
         logger.debug("Calling generate_observations for sensor type {0}...".format(s.typ))
-        observations = s.generate_observations(phenomenon_time=_next_date().isoformat(),
-                                               feature_of_interest_id=foi_id)
+        observations = s.generate_observations(phenomenon_time=_next_date().isoformat())
         logger.debug("Enqueing observations...")
         [queue.put(o) for o in observations]
 
