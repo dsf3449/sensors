@@ -64,23 +64,45 @@ def observations_to_json(observations_dict):
                 data_array = io.StringIO()
                 # Write first element to dataArray
                 o = obs_for_ds[0]
-                e = JSON_DATA_ARRAY_ELEM.format(phenomenonTime=o.phenomenonTime,
-                                                result=o.result,
-                                                featureOfInterestId=o.featureOfInterestId,
-                                                parameters=o.get_parameters_as_str())
-                data_array.write(e)
-                # Write remaining elements to dataArray
-                for o in obs_for_ds[1:]:
+                e = None
+                foi_present = False
+                if o.featureOfInterestId is not None:
+                    foi_present = True
                     e = JSON_DATA_ARRAY_ELEM.format(phenomenonTime=o.phenomenonTime,
                                                     result=o.result,
                                                     featureOfInterestId=o.featureOfInterestId,
                                                     parameters=o.get_parameters_as_str())
+                else:
+                    foi_present = False
+                    e = JSON_DATA_ARRAY_ELEM_NO_FOI.format(phenomenonTime=o.phenomenonTime,
+                                                           result=o.result,
+                                                           featureOfInterestId=o.featureOfInterestId,
+                                                           parameters=o.get_parameters_as_str())
+                data_array.write(e)
+                # Write remaining elements to dataArray
+                for o in obs_for_ds[1:]:
+                    if foi_present:
+                        e = JSON_DATA_ARRAY_ELEM.format(phenomenonTime=o.phenomenonTime,
+                                                        result=o.result,
+                                                        featureOfInterestId=o.featureOfInterestId,
+                                                        parameters=o.get_parameters_as_str())
+                    else:
+                        e = JSON_DATA_ARRAY_ELEM_NO_FOI.format(phenomenonTime=o.phenomenonTime,
+                                                               result=o.result,
+                                                               featureOfInterestId=o.featureOfInterestId,
+                                                               parameters=o.get_parameters_as_str())
                     data_array.write(',')
                     data_array.write(e)
                 # Second, generate Datastream JSON (with all dataArray elements)
-                d = JSON_DATASTREAM.format(datastreamId=datastream_id,
-                                           count=count,
-                                           dataArray=data_array.getvalue())
+                d = None
+                if foi_present:
+                    d = JSON_DATASTREAM.format(datastreamId=datastream_id,
+                                               count=count,
+                                               dataArray=data_array.getvalue())
+                else:
+                    d = JSON_DATASTREAM_NO_FOI.format(datastreamId=datastream_id,
+                                                      count=count,
+                                                      dataArray=data_array.getvalue())
                 data_array.close()
                 # Third, write Datastream JSON
                 json.write(d)
