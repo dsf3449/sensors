@@ -78,10 +78,12 @@ class HttpsTransport(Transport):
             #   created, then update its status to error.
             ids_to_delete = []
             ids_to_update_status = []
+            err_mesgs = []
 
             for (i, e) in enumerate(r.json()):
-                if e == self.ERROR_RESPONSE:
+                if e.startswith(self.ERROR_RESPONSE):
                     ids_to_update_status.append(obs[i].id)
+                    err_mesgs.append(e)
                 else:
                     ids_to_delete.append(obs[i].id)
 
@@ -89,6 +91,7 @@ class HttpsTransport(Transport):
             self.logger.debug("Transmitter: Successfully submitted {0} observations.".format(len(ids_to_delete)))
             repo.update_observation_status(ids_to_update_status, status=SqliteRepository.STATUS_ERROR)
             mesg = ("Transmitter: Failed to submit {0} observations, "
+                    "due to errors: " + "; ".join(err_mesgs) + ". "
                     "which were retained in local database with status {1}.").format(len(ids_to_update_status),
                                                                                      SqliteRepository.STATUS_ERROR)
             self.logger.debug(mesg)
