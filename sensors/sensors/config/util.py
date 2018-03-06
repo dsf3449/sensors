@@ -24,3 +24,12 @@ def get_config_element(element_name, container, container_name, optional=False):
     elif element_name in container:
         element = container[element_name]
     return element
+
+
+def get_config_element_with_default(element_name, container, default=None):
+    element = None
+    if element_name not in container:
+        element = default
+    else:
+        element = container[element_name]
+    return element

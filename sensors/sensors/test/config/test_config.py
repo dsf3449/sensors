@@ -1,6 +1,7 @@
 import os
 import unittest
 from datetime import timedelta
+import logging
 
 from sensors.config.constants import *
 from sensors.config import Config, ConfigurationError
@@ -21,6 +22,8 @@ class TestConfiguration(unittest.TestCase):
         # Logging
         self.assertTrue(CFG_LOGGING_LOGGER_PATH in c)
         self.assertEqual(c[CFG_LOGGING_LOGGER_PATH], '/var/log/sensor.log')
+        self.assertTrue(c[CFG_LOGGING_LEVEL_CONSOLE], logging.INFO)
+        self.assertTrue(c[CFG_LOGGING_LEVEL_FILE], logging.DEBUG)
         # Spooler
         self.assertTrue(CFG_SPOOLER_DB_PATH in c)
         self.assertEqual(c[CFG_SPOOLER_DB_PATH], '/var/spool/mqueue/sensor.sqlite')

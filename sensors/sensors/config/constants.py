@@ -1,3 +1,4 @@
+import logging
 
 ENV_YAML_PATH = 'LEARN_YAML_PATH'
 
@@ -18,6 +19,15 @@ CFG_SIMULATOR = 'simulator'
 
 CFG_LOGGING = 'logging'
 CFG_LOGGING_LOGGER_PATH = 'logger_path'
+CFG_LOGGING_LEVEL_CONSOLE = 'level_console'
+CFG_LOGGING_LEVEL_FILE = 'level_file'
+
+CFG_LOGGING_LEVELS = {'CRITICAL': logging.CRITICAL,
+                      'ERROR': logging.ERROR,
+                      'WARNING': logging.WARNING,
+                      'INFO': logging.INFO,
+                      'DEBUG': logging.DEBUG,
+                      'NOTSET': logging.NOTSET}
 
 CFG_SPOOLER = 'spooler'
 CFG_SPOOLER_DB_PATH = 'db_path'

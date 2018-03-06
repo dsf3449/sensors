@@ -6,6 +6,8 @@ simulator:
   enabled: true
 logging:
   logger_path: /var/log/sensor.log
+  level_console: INFO
+  level_file: DEBUG
 spooler:
   db_path: /var/spool/mqueue/sensor.sqlite
 thing:

@@ -1,4 +1,6 @@
 
 LOGGER_NAME = 'sensors'
 DEFAULT_LOGGER_PATH = '/var/log/sensor.log'
+DEFAULT_LOGGER_LEVEL_CONSOLE = 'DEBUG'
+DEFAULT_LOGGER_LEVEL_FILE = 'INFO'
 DEFAULT_DB_PATH = '/var/spool/sensor.sqlite'

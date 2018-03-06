@@ -74,10 +74,25 @@ class Config:
             # Logging
             logger_path = DEFAULT_LOGGER_PATH
             if CFG_LOGGING in config_raw:
-                logger_path = get_config_element(CFG_LOGGING_LOGGER_PATH, config_raw[CFG_LOGGING], CFG_LOGGING,
-                                                 optional=True)
-                if logger_path is None:
-                    logger_path = DEFAULT_LOGGER_PATH
+                logging_cfg = config_raw[CFG_LOGGING]
+                # Logging file path
+                logger_path = get_config_element_with_default(CFG_LOGGING_LOGGER_PATH, logging_cfg,
+                                                              default=DEFAULT_LOGGER_PATH)
+                # Logging levels
+                # Console logger
+                level_console = get_config_element_with_default(CFG_LOGGING_LEVEL_CONSOLE, logging_cfg,
+                                                                default=DEFAULT_LOGGER_LEVEL_CONSOLE)
+                if level_console not in CFG_LOGGING_LEVELS:
+                    raise_config_error("Console logging level {0} is not known.".format(level_console))
+                c[CFG_LOGGING_LEVEL_CONSOLE] = CFG_LOGGING_LEVELS[level_console]
+                # File logger
+                level_file = get_config_element_with_default(CFG_LOGGING_LEVEL_FILE, logging_cfg,
+                                                             default=DEFAULT_LOGGER_LEVEL_FILE)
+                if level_file not in CFG_LOGGING_LEVELS:
+                    raise_config_error("File logging level {0} is not known.".format(level_file))
+                c[CFG_LOGGING_LEVEL_FILE] = CFG_LOGGING_LEVELS[level_file]
+
+            # Validate logging path
             logger_path_dir = os.path.dirname(logger_path)
             if not os.path.exists(logger_path_dir):
                 raise raise_config_error("Logger path directory {0} does not exist.".format(logger_path_dir))

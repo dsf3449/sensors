@@ -89,12 +89,13 @@ class HttpsTransport(Transport):
 
             repo.delete_observations(ids_to_delete)
             self.logger.debug("Transmitter: Successfully submitted {0} observations.".format(len(ids_to_delete)))
-            repo.update_observation_status(ids_to_update_status, status=SqliteRepository.STATUS_ERROR)
-            mesg = ("Transmitter: Failed to submit {0} observations, "
-                    "due to errors: " + "; ".join(err_mesgs) + ". "
-                    "which were retained in local database with status {1}.").format(len(ids_to_update_status),
-                                                                                     SqliteRepository.STATUS_ERROR)
-            self.logger.debug(mesg)
+            if len(err_mesgs) > 0:
+                repo.update_observation_status(ids_to_update_status, status=SqliteRepository.STATUS_ERROR)
+                mesg = ("Transmitter: Failed to submit {0} observations, "
+                        "due to errors: " + "; ".join(err_mesgs) + ". "
+                        "which were retained in local database with status {1}.").format(len(ids_to_update_status),
+                                                                                         SqliteRepository.STATUS_ERROR)
+                self.logger.error(mesg)
 
     def _jwt_authenticate(self):
         self._init_logger()

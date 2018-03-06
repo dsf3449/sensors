@@ -1,7 +1,7 @@
 import logging
 
 from sensors.common import constants
-from sensors.config.constants import CFG_LOGGING_LOGGER_PATH
+from sensors.config.constants import CFG_LOGGING_LOGGER_PATH, CFG_LOGGING_LEVEL_CONSOLE, CFG_LOGGING_LEVEL_FILE
 
 loggers = {}
 
@@ -20,13 +20,13 @@ def configure_logger(c):
         logger_path = c[CFG_LOGGING_LOGGER_PATH]
 
         logger = logging.getLogger(constants.LOGGER_NAME)
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(c[CFG_LOGGING_LEVEL_CONSOLE])
 
         fh = logging.FileHandler(logger_path)
-        fh.setLevel(logging.DEBUG)
+        fh.setLevel(c[CFG_LOGGING_LEVEL_FILE])
 
         ch = logging.StreamHandler()
-        ch.setLevel(logging.DEBUG)
+        ch.setLevel(c[CFG_LOGGING_LEVEL_CONSOLE])
 
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         fh.setFormatter(formatter)
