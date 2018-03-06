@@ -2,6 +2,7 @@ import sqlite3
 
 from sensors.config.constants import CFG_SPOOLER_DB_PATH
 from sensors.domain.observation import Observation
+from sensors.common import logging
 
 
 class SqliteRepository:
@@ -27,6 +28,8 @@ class SqliteRepository:
     SQL_DELETE_OBS = "DELETE FROM observation WHERE id IN ({0})"
     SQL_UPDATE_STATUS = 'UPDATE observation SET status="{0}" WHERE id IN ({1})'
 
+    MAX_RETRIES = 5
+
     def _perform_action_with_connection(self, action):
         with sqlite3.connect(self.db_path) as conn:
             action(conn)
@@ -35,6 +38,7 @@ class SqliteRepository:
     def __init__(self, config):
         self.db_path = config[CFG_SPOOLER_DB_PATH]
         self._perform_action_with_connection(SqliteRepository._create_tables)
+        self.logger = logging.get_instance()
 
     @staticmethod
     def _create_tables(conn):
@@ -55,17 +59,29 @@ class SqliteRepository:
     def get_observations(self, limit="360"):
         observations = []
 
+        attempts = 1
         with sqlite3.connect(self.db_path) as conn:
-            for r in conn.execute(SqliteRepository.SQL_GET_OBS, (limit,)):
-                o = Observation()
-                o.id = r[0]
-                o.featureOfInterestId = r[1]
-                o.datastreamId = r[2]
-                o.phenomenonTime = r[3]
-                o.result = r[4]
-                o.set_parameters_from_str(r[5])
-                observations.append(o)
-            conn.commit()
+            while attempts < self.MAX_RETRIES:
+                attempts += 1
+                try:
+                    for r in conn.execute(SqliteRepository.SQL_GET_OBS, (limit,)):
+                        o = Observation()
+                        o.id = r[0]
+                        o.featureOfInterestId = r[1]
+                        o.datastreamId = r[2]
+                        o.phenomenonTime = r[3]
+                        o.result = r[4]
+                        o.set_parameters_from_str(r[5])
+                        observations.append(o)
+                    break
+                except sqlite3.OperationalError as e:
+                    self.logger.warn("Error encountered reading observations from SQLite database, error was: {0}"
+                                     ", will re-try {1} times...".
+                                     format(str(e), self.MAX_RETRIES))
+                    if attempts >= self.MAX_RETRIES:
+                        observations = None
+                        break
+            conn.close()
 
         return observations
 

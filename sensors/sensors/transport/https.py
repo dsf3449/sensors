@@ -54,6 +54,9 @@ class HttpsTransport(Transport):
     def transmit(self, repo: SqliteRepository):
         self._init_logger()
         obs = repo.get_observations()
+        if obs is None:
+            self.logger.warn("Transmitter: unable to read observations from DB, giving up for now.")
+            return
         self.logger.debug("Transmitter: read {0} observations from DB.".format(len(obs)))
         if len(obs) > 0:
             # Serialize observations to SensorThings dataArray JSON
