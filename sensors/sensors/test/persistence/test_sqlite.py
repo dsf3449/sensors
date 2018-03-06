@@ -23,7 +23,7 @@ class TestSqliteRepository(unittest.TestCase):
 
     def test_rw_observations(self):
 
-        repo = SqliteRepository(config[CFG_SPOOLER_DB_PATH])
+        repo = SqliteRepository(config)
 
         o1 = Observation()
         o1.featureOfInterestId = "12345"
