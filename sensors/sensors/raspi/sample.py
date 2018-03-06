@@ -47,7 +47,7 @@ def sample():
 
         while True:
             # Schedule event to run every minute
-            logger.debug("Raspberry Pi Sampler: scheduling observation sampling with delay {0}...".
+            logger.debug("Raspberry Pi Sampler: scheduling observation sampling with delay of {0} seconds...".
                          format(SAMPLE_INTERVAL_ONE_MINUTE))
             s.enter(SAMPLE_INTERVAL_ONE_MINUTE,
                     SCHEDULE_PRIORITY_DEFAULT,
