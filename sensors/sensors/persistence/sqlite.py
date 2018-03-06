@@ -81,7 +81,6 @@ class SqliteRepository:
                     if attempts >= self.MAX_RETRIES:
                         observations = None
                         break
-            conn.close()
 
         return observations
 
