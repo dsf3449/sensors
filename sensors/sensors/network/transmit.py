@@ -23,6 +23,7 @@ def main():
     config = Config().config
     global logger
     logger = configure_logger(config)
+    logger.info("Transmitter: entering.")
 
     repo = SqliteRepository(config)
     s = sched.scheduler(time.time, time.sleep)

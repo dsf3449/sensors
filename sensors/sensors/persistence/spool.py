@@ -6,6 +6,7 @@ from sensors.persistence.sqlite import SqliteRepository
 def spool_data(q):
     config = Config().config
     logger = configure_logger(config)
+    logger.info("Spooler: entering.")
     repo = SqliteRepository(config)
     while True:
         try:

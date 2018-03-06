@@ -59,7 +59,7 @@ def sample():
     except:
         pass
     finally:
-        logger.info("Test Sample: exiting.")
+        logger.info("Raspberry Pi Sampler: exiting.")
 
 
 def main():
@@ -84,6 +84,7 @@ def main():
     config = Config().config
     global logger
     logger = configure_logger(config)
+    logger.info("Raspberry Pi Sampler: entering.")
 
     try:
         GPIO.setwarnings(False)
@@ -92,4 +93,4 @@ def main():
     except KeyboardInterrupt:
         GPIO.cleanup()
     finally:
-        logger.info("Raspberry Pi sensor: exiting.")
+        logger.info("Raspberry Pi Sampler: exiting.")
