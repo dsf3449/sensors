@@ -5,7 +5,7 @@ from requests_toolbelt.adapters import host_header_ssl
 from requests.exceptions import ConnectionError
 
 from sensors.domain.transport import Transport
-from sensors.config.constants import *
+from sensors.common.constants import *
 from sensors.config import get_config_element
 from sensors.transport import *
 from sensors.persistence.sqlite import SqliteRepository

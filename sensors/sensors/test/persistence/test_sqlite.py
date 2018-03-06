@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from sensors.config.constants import *
+from sensors.common.constants import *
 from sensors.config import Config
 from sensors.domain.observation import Observation
 from sensors.persistence.sqlite import SqliteRepository

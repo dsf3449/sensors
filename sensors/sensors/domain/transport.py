@@ -1,4 +1,4 @@
-from sensors.config.constants import *
+from sensors.common.constants import *
 
 
 class Transport:

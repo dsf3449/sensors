@@ -4,7 +4,7 @@ import time
 
 from sensors.common.logging import configure_logger
 from sensors.config import Config, ConfigurationError
-from sensors.config.constants import *
+from sensors.common.constants import *
 from sensors.persistence.sqlite import SqliteRepository
 from sensors.transport import AuthenticationException, TransmissionException
 

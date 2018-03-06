@@ -1,7 +1,7 @@
 import random
 
 from sensors.domain.sensor import OzoneSensor
-from sensors.config.constants import *
+from sensors.common.constants import *
 
 
 class Mq131(OzoneSensor):

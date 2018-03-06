@@ -1,7 +1,6 @@
-from typing import List
 from datetime import datetime, timedelta
 
-from sensors.config.constants import *
+from sensors.common.constants import *
 from sensors.domain.observation import Observation
 
 

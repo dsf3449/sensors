@@ -9,7 +9,7 @@ import sys
 import sensors.persistence.spool as spool
 from sensors.common.logging import configure_logger
 from sensors.config import Config, ConfigurationError
-from sensors.config.constants import *
+from sensors.common.constants import *
 
 
 SAMPLE_INTERVAL_ONE_MINUTE = 60

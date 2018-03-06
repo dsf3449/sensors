@@ -1,7 +1,7 @@
 import logging
 
 from sensors.common import constants
-from sensors.config.constants import CFG_LOGGING_LOGGER_PATH, CFG_LOGGING_LEVEL_CONSOLE, CFG_LOGGING_LEVEL_FILE
+from sensors.common.constants import CFG_LOGGING_LOGGER_PATH, CFG_LOGGING_LEVEL_CONSOLE, CFG_LOGGING_LEVEL_FILE
 
 loggers = {}
 

@@ -2,7 +2,7 @@ import datetime
 import random
 
 from sensors.domain.sensor import AirTempRHSensor
-from sensors.config.constants import *
+from sensors.common.constants import *
 
 
 class Dht11(AirTempRHSensor):

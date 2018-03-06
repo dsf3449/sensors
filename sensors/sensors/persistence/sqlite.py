@@ -1,6 +1,6 @@
 import sqlite3
 
-from sensors.config.constants import CFG_SPOOLER_DB_PATH
+from sensors.common.constants import CFG_SPOOLER_DB_PATH
 from sensors.domain.observation import Observation
 from sensors.common import logging
 

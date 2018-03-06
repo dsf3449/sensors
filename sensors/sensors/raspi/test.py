@@ -8,7 +8,7 @@ import RPi.GPIO as GPIO
 
 from sensors.common.logging import configure_logger
 from sensors.config import Config, ConfigurationError
-from sensors.config.constants import *
+from sensors.common.constants import *
 
 from sensors.raspi.constants import *
 

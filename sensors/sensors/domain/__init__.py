@@ -1,4 +1,4 @@
-from sensors.config.constants import *
+from sensors.common.constants import *
 
 # Sensor drivers
 from sensors.raspi.sensor import mq131
@@ -7,10 +7,6 @@ from sensors.raspi.sensor import dht11
 # Simulated sensors
 from sensors.simulator.sensor import mq131 as sim_mq131
 from sensors.simulator.sensor import dht11 as sim_dht11
-
-# Transports
-from sensors.domain.transport import Transport
-from sensors.transport.https import HttpsTransport
 
 
 def get_sensor_instance_simulator(typ, *args, **kwargs):
@@ -32,6 +28,9 @@ def get_sensor_instance(typ, *args, **kwargs):
 
 
 def get_transport_instance(typ, **kwargs):
+    # Avoid circular imports...
+    from sensors.domain.transport import Transport
+    from sensors.transport.https import HttpsTransport
     if typ == Transport.TRANSPORT_TYPE_HTTPS:
         return HttpsTransport(typ, **kwargs)
     else:

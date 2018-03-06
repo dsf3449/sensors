@@ -4,10 +4,8 @@ from collections import ChainMap
 
 from .util import *
 from sensors.common.constants import *
-from sensors.config.constants import *
 from sensors.domain.observed_property import *
 from sensors.domain.thing import *
-from sensors.domain.transport import *
 from sensors.domain import get_transport_instance
 
 from ruamel import yaml

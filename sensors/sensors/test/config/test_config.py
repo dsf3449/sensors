@@ -3,7 +3,7 @@ import unittest
 from datetime import timedelta
 import logging
 
-from sensors.config.constants import *
+from sensors.common.constants import *
 from sensors.config import Config, ConfigurationError
 from sensors.domain.sensor import Sensor
 from sensors.domain.observed_property import ObservedProperty
