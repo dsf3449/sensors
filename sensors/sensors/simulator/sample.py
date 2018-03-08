@@ -1,14 +1,15 @@
 import argparse
 import datetime
 import multiprocessing as mp
-import random
 import sched
 import time
 import os
+import sys
 
 import sensors.persistence.spool as spool
 from sensors.common.logging import configure_logger
-from sensors.domain.observation import Observation
+from sensors.config import Config, ConfigurationError
+from sensors.common.constants import *
 
 
 SAMPLE_INTERVAL_ONE_MINUTE = 60
@@ -16,18 +17,14 @@ SCHEDULE_PRIORITY_DEFAULT = 1
 
 
 # Configure logging
-logger = configure_logger()
+logger = None
 
 
 next_date = None
 di = None
 
 
-def _rand():
-    return random.uniform(1.23, 123.45)
-
-
-def _next_date():
+def _next_date() -> datetime:
     global next_date
     if next_date is None:
         next_date = datetime.datetime.now().isoformat()
@@ -36,37 +33,21 @@ def _next_date():
     return next_date
 
 
-def generate_observation(featureOfInterestId, datastreamId, phenomenonTime,
-                         result, parameters):
-    logger.debug("generate_observation: {0}".format(phenomenonTime.isoformat()))
-    o = Observation()
-    o.featureOfInterestId = featureOfInterestId
-    o.datastreamId = datastreamId
-    o.phenomenonTime = phenomenonTime.isoformat()
-    o.result = result
-    o.set_parameters(**parameters)
-
-    return o
-
-
-def generate_ozone_MQ131():
-    foi_id = os.environ.get("CGIST_FOI_ID", "c81a4920-100b-11e7-987b-9b2f50364984")
-    ds_id = os.environ.get("CGIST_DS_ID_MQ131", "1e34fad0-100c-11e7-987b-9b2f50364984")
-    parameters = {"voltage": str(_rand()),
-                  "Rs": str(_rand()),
-                  "Ro": str(_rand()),
-                  "Rs_Ro_Ratio": str(_rand())}
-    return generate_observation(foi_id, ds_id,
-                                _next_date(),
-                                str(_rand()), parameters)
-
-
 def generate_observations_minute(queue):
-    logger.debug("Generating O3 observation...")
-    o = generate_ozone_MQ131()
-    logger.debug("Queuing observation {0}...".format(str(o)))
-    queue.put(o)
-    logger.debug("done")
+    config = Config().config
+    logger = configure_logger(config)
+    logger.debug("Begin generate_observations_minute...")
+    thing = config[CFG_THING]
+
+    # Iterate over sensors and generate observations
+    sensors = config[CFG_SENSORS]
+    logger.debug("Iterating over {0} sensors...".format(len(sensors)))
+    for s in sensors:
+        logger.debug(str(s))
+        logger.debug("Calling generate_observations for sensor type {0}...".format(s.typ))
+        observations = s.generate_observations(phenomenon_time=_next_date().isoformat())
+        logger.debug("Enqueing observations...")
+        [queue.put(o) for o in observations]
 
 
 def sample(start_date=datetime.datetime.now().isoformat(),
@@ -83,10 +64,14 @@ def sample(start_date=datetime.datetime.now().isoformat(),
     try:
         # Start process to send data to
         mp.set_start_method('spawn')
+        logger.debug("About to create queue...")
         q = mp.Queue()
+        logger.debug("About to create process...")
         p = mp.Process(target=spool.spool_data, args=(q,))
+        logger.debug("About to start process...")
         p.start()
 
+        logger.debug("About to start scheduler...")
         s = sched.scheduler(time.time, time.sleep)
 
         while True:
@@ -116,7 +101,26 @@ def main():
     parser.add_argument('-i', '--dateint', type=int,
                         default=1,
                         help='Number of minutes between subsequent data')
+    parser.add_argument('-c', '--config', type=str, required=False)
+    parser.add_argument('-t', '--configtest', action='store_true')
     args = parser.parse_args()
+
+    if args.config is not None:
+        assert(os.path.exists(args.config))
+        os.environ[ENV_YAML_PATH] = args.config
+
+    if args.configtest:
+        try:
+            c = Config().config
+        except ConfigurationError as e:
+            print("Configuration is invalid: {0}".format(e.message))
+            sys.exit(1)
+        print("Configuration is valid.")
+        sys.exit(0)
+
+    config = Config().config
+    global logger
+    logger = configure_logger(config)
 
     start_date = datetime.datetime(year=args.startdate[0], month=args.startdate[1], day=args.startdate[2],
                                    hour=args.startdate[3], minute=args.startdate[4])

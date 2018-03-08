@@ -3,11 +3,9 @@ import sys
 import argparse
 import time
 import sched
-import multiprocessing as mp
 
 import RPi.GPIO as GPIO
 
-import sensors.persistence.spool as spool
 from sensors.common.logging import configure_logger
 from sensors.config import Config, ConfigurationError
 from sensors.common.constants import *
@@ -15,7 +13,7 @@ from sensors.common.constants import *
 from sensors.raspi.constants import *
 
 
-def generate_observations_minute(queue):
+def generate_observations_minute():
     config = Config().config
     logger = configure_logger(config)
     logger.debug("Begin generate_observations_minute...")
@@ -29,42 +27,32 @@ def generate_observations_minute(queue):
         logger.debug("Calling generate_observations for sensor type {0}...".format(s.typ))
         observations = s.generate_observations()
         logger.debug("Enqueing observations...")
-        [queue.put(o) for o in observations]
+        [logger.debug(str(o)) for o in observations]
 
 
 def sample():
-    try:
-        # Start process to send data to
-        mp.set_start_method('spawn')
-        logger.debug("About to create queue...")
-        q = mp.Queue()
-        logger.debug("About to create process...")
-        p = mp.Process(target=spool.spool_data, args=(q,))
-        logger.debug("About to start process...")
-        p.start()
-        logger.debug("About to start scheduler...")
-        s = sched.scheduler(time.time, time.sleep)
+    logger.debug("About to start scheduler...")
+    s = sched.scheduler(time.time, time.sleep)
 
+    try:
         while True:
             # Schedule event to run every minute
-            logger.debug("Raspberry Pi Sampler: scheduling observation sampling with delay of {0} seconds...".
-                         format(SAMPLE_INTERVAL_ONE_MINUTE))
+            logger.debug("Test Sampler: scheduling observation sampling...")
             s.enter(SAMPLE_INTERVAL_ONE_MINUTE,
                     SCHEDULE_PRIORITY_DEFAULT,
-                    generate_observations_minute,
-                    argument=(q,))
+                    generate_observations_minute)
             # Run scheduled events
-            logger.debug("Raspberry Pi Sampler: Running scheduler...")
+            logger.debug("Test Sampler: Running scheduler...")
             s.run()
-            logger.debug("Raspberry Pi Sampler: End of iteration.")
+            logger.debug("Test Sampler: End of iteration.")
     except:
         pass
     finally:
-        logger.info("Raspberry Pi Sampler: exiting.")
+        logger.info("Test Sample: exiting.")
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Raspberry Pi sampler for LEaRN project')
+    parser = argparse.ArgumentParser(description='Test Raspberry Pi sensors')
     parser.add_argument('-c', '--config', type=str, required=False)
     parser.add_argument('-t', '--configtest', action='store_true')
     args = parser.parse_args()
@@ -85,7 +73,6 @@ def main():
     config = Config().config
     global logger
     logger = configure_logger(config)
-    logger.info("Raspberry Pi Sampler: entering.")
 
     try:
         GPIO.setwarnings(False)
@@ -94,4 +81,4 @@ def main():
     except KeyboardInterrupt:
         GPIO.cleanup()
     finally:
-        logger.info("Raspberry Pi Sampler: exiting.")
+        logger.info("Raspberry Pi sensor: exiting.")

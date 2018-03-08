@@ -19,7 +19,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.2.0',
+    version='0.3.0',
 
     description='LEaRN Data Logger',
     long_description=long_description,
@@ -53,7 +53,6 @@ setup(
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
@@ -63,7 +62,7 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=find_packages(exclude=['sensors', 'docs']),
+    packages=find_packages(exclude=['test', 'docs']),
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
@@ -73,7 +72,14 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['requests', 'requests-toolbelt', 'RPi.GPIO'],
+    install_requires=['requests',
+                      'requests-toolbelt',
+                      'ruamel.yaml<0.15',
+                      'RPi.GPIO',
+                      'serial',
+                      'py-opc',
+                      'adafruit-ads1x15'
+                      ],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
@@ -103,8 +109,11 @@ setup(
     entry_points={
         'console_scripts': [
             'sensor_raspi_sample=sensors.raspi.sample:main',
+            'sensor_raspi_test=sensors.raspi.test:main',
             'sensor_transmit=sensors.network.transmit:main',
-            'sensor_simulator=sensors.simulator.sample:main'
+            'sensor_simulator=sensors.simulator.sample:main',
+            'calibrate_mq131=sensors.raspi.calibrate_mq131:main',
+            'sample_dht=sensors.raspi.sample_temp_humidity:main'
         ],
     },
 )

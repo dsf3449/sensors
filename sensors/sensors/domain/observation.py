@@ -1,9 +1,5 @@
-from sensors.common.logging import get_logger
-
 
 class Observation:
-
-    logger = get_logger()
 
     def __init__(self):
         self.id = None
@@ -48,8 +44,10 @@ class Observation:
                 (k, v) = p.split(':')
                 self.parameters[k.strip('"')] = v.strip('"')
             except ValueError:
-                self.logger.error("set_parameters_from_json(): Unable to parse parameter {0}", p)
-                continue
+                # self.logger.error("set_parameters_from_json(): Unable to parse parameter {0}", p)
+                # continue
+                raise("set_parameters_from_json(): Unable to parse parameter {0}".\
+                    format(p))
 
     def get_parameters_as_str(self):
         return ",".join(['"{k}":"{v}"'.format(k=e[0], v=e[1]) for e in list(self.parameters.items())])
