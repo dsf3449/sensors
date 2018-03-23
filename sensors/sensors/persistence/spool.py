@@ -1,10 +1,13 @@
-from sensors.common.logging import get_logger
+from sensors.config import Config
+from sensors.common.logging import configure_logger
 from sensors.persistence.sqlite import SqliteRepository
 
-logger = get_logger()
 
 def spool_data(q):
-    repo = SqliteRepository()
+    config = Config().config
+    logger = configure_logger(config)
+    logger.info("Spooler: entering.")
+    repo = SqliteRepository(config)
     while True:
         try:
             logger.debug("Spooler: getting from queue...")

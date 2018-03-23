@@ -1,21 +1,29 @@
 import os
 import unittest
 
-import sensors.common.constants as constants
+from sensors.common.constants import *
+from sensors.config import Config
 from sensors.domain.observation import Observation
 from sensors.persistence.sqlite import SqliteRepository
 
 
 class TestSqliteRepository(unittest.TestCase):
 
+    config = None
+
     def setUp(self):
+        os.environ[ENV_YAML_PATH] = './test_sqlite.yml'
+        global config
+        config = Config(unittest=True).config
+
         try:
-            os.unlink(constants.DB_PATH)
+            os.unlink(config[CFG_SPOOLER_DB_PATH])
         except FileNotFoundError:
             pass
 
     def test_rw_observations(self):
-        repo = SqliteRepository()
+
+        repo = SqliteRepository(config)
 
         o1 = Observation()
         o1.featureOfInterestId = "12345"
@@ -36,7 +44,7 @@ class TestSqliteRepository(unittest.TestCase):
         repo.create_observation(o2)
 
         obs = repo.get_observations()
-        self.assertEquals(2, len(obs))
+        self.assertEqual(2, len(obs))
         self.assertTrue(o1, obs[0])
         self.assertTrue(o2, obs[1])
 
@@ -47,10 +55,11 @@ class TestSqliteRepository(unittest.TestCase):
         repo.update_observation_status(ids_to_update)
 
         obs = repo.get_observations()
-        self.assertEquals(0, len(obs))
+        self.assertEqual(0, len(obs))
 
         obs = repo.get_all_observations()
-        self.assertEquals(1, len(obs))
+        self.assertEqual(1, len(obs))
+
 
 if __name__ == '__main__':
     unittest.main()
