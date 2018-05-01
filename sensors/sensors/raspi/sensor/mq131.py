@@ -5,6 +5,7 @@ This driver is based on the Arduino driver that can be found here:
 MCP3002-specific code based on:
     https://dmt195.wordpress.com/2012/09/26/mcp3002-example-code-for-raspberry-pi-adc-through-spi/
 """
+# TODO: Abstract into super class with two subclasses, one for MCP3002 ADC and ADS1015 ADC
 import math
 import time
 
