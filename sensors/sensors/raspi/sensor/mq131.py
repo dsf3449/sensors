@@ -76,9 +76,9 @@ class Mq131(OzoneSensor):
 
     def _readadc(self):
         if self.adc_type == ADCType.MCP3002:
-            self._readadc_mcp3002()
+            return self._readadc_mcp3002()
         elif self.adc_type == ADCType.ADS1015:
-            self._initialize_ads1015()
+            return self._initialize_ads1015()
 
     def _readadc_mcp3002(self):
         adcnum = 0
@@ -121,7 +121,7 @@ class Mq131(OzoneSensor):
         return adcout
 
     def _readadc_ads1015(self):
-        pass
+        return 0.0
 
     # Calculates voltage from Analog to Digital Converter in medium voltage (mV)
     def _voltage_adc(self, adc_avg):
