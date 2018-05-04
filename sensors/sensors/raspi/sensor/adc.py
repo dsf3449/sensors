@@ -7,7 +7,7 @@ class ADCType(Enum):
     ADS1015 = 2
 
     @classmethod
-    def from_string(adc_str):
+    def from_string(cls, adc_str):
         if adc_str == CFG_SENSOR_ADC_MCP3002:
             return ADCType.MCP3002
         elif adc_str == CFG_SENSOR_ADC_ADS1015:
