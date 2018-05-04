@@ -77,7 +77,7 @@ class TestConfiguration(unittest.TestCase):
         self.assertEqual(False, t.verify_ssl())
 
     def test_config_one_ro(self):
-        os.environ[ENV_YAML_PATH] = '../data/config1_Ro.yml'
+        os.environ[ENV_YAML_PATH] = '../data/config1_props.yml'
         c = Config(unittest=True).config
 
         # Simulator
