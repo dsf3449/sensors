@@ -1,5 +1,5 @@
 import argparse
-import datetime
+from datetime import datetime, timedelta, timezone
 import multiprocessing as mp
 import sched
 import time
@@ -27,7 +27,7 @@ di = None
 def _next_date() -> datetime:
     global next_date
     if next_date is None:
-        next_date = datetime.datetime.now().isoformat()
+        next_date = datetime.now(timezone.utc).isoformat()
         return next_date
     next_date = next_date + di
     return next_date
@@ -50,8 +50,8 @@ def generate_observations_minute(queue):
         [queue.put(o) for o in observations]
 
 
-def sample(start_date=datetime.datetime.now().isoformat(),
-           date_interval=datetime.timedelta(minutes=1)):
+def sample(start_date=datetime.now(timezone.utc).isoformat(),
+           date_interval=timedelta(minutes=1)):
     global next_date
     global di
 
