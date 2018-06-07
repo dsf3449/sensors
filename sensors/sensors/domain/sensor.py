@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sensors.common.constants import *
 from sensors.domain.observation import Observation
@@ -13,7 +13,7 @@ class Sensor:
 
     def generate_observations(self,
                               phenomenon_time=None,
-                              generate_phenomenon_time=lambda: datetime.now().isoformat(),
+                              generate_phenomenon_time=lambda: datetime.now(timezone.utc).isoformat(),
                               feature_of_interest_id=None):
         """Generate observations for a given phenomenon time for all observed properties
            registered with a sensor.
@@ -83,7 +83,7 @@ class AirTempRHSensor(Sensor):
 
     def _sample(self):
         if self.previous_result:
-            now = datetime.now()
+            now = datetime.now(timezone.utc)
             if self.previous_result.timestamp + AirTempRHSensor.RESULT_TTL > now:
                 return self.previous_result
 
@@ -125,6 +125,6 @@ class AirTempRHSensor(Sensor):
 
     class AirTempRHResult:
         def __init__(self, temperature, humidity):
-            self.timestamp = datetime.now()
+            self.timestamp = datetime.now(timezone.utc)
             self.temperature = temperature
             self.humidity = humidity
