@@ -133,7 +133,7 @@ class Mq131(OzoneSensor):
         for i in range(0, Mq131.READ_SAMPLE_TIMES):
             adc_avg += self._readadc()
             time.sleep(Mq131.READ_SAMPLE_INTERVAL)  # Every five seconds
-            adc_avg = adc_avg / Mq131.READ_SAMPLE_TIMES
+        adc_avg = adc_avg / Mq131.READ_SAMPLE_TIMES
         return adc_avg
 
     def _mq_resistance(self, adc):
