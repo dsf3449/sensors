@@ -5,12 +5,14 @@ This driver is based on the Arduino driver that can be found here:
 MCP3002-specific code based on:
     https://dmt195.wordpress.com/2012/09/26/mcp3002-example-code-for-raspberry-pi-adc-through-spi/
 """
-# TODO: Abstract into super class with two subclasses, one for MCP3002 ADC and ADS1015 ADC
 import math
 import time
 
 from sensors.raspi import import_raspi_gpio
 GPIO = import_raspi_gpio()
+
+from sensors.raspi import import_adafruit_adc
+ADAFRUIT_ADC = import_adafruit_adc()
 
 from sensors.domain.sensor import OzoneSensor
 from sensors.common.constants import *
@@ -33,6 +35,8 @@ class Mq131(OzoneSensor):
     CALIBRATION_SAMPLE_TIMES = 50
     CALIBRATION_SAMPLE_INTERVAL = 0.5
     ADC_DEFAULT = CFG_SENSOR_ADC_MCP3002
+    ADC_ADS1015_CHANNEL = 0
+    ADC_ADS1015_GAIN = 1.0
 
     RO_MULT = math.exp((math.log(PC_CURVE_0 / 10) / PC_CURVE_1))
     RESISTANCE_NUMERATOR = 1024.0 * 1000.0 * RL_MQ131
@@ -44,7 +48,7 @@ class Mq131(OzoneSensor):
             self._initialize_ads1015()
 
     def _initialize_ads1015(self):
-        pass
+        self.adc = ADAFRUIT_ADC.ADS1015()
 
     def _initialize_mcp3002(self):
         # Initialize GPIO
@@ -113,7 +117,7 @@ class Mq131(OzoneSensor):
             GPIO.output(clockpin, True)
             GPIO.output(clockpin, False)
             adcout <<= 1
-            if (GPIO.input(misopin)):
+            if GPIO.input(misopin):
                 adcout |= 0x1
         GPIO.output(cspin, True)
 
@@ -121,12 +125,21 @@ class Mq131(OzoneSensor):
         return adcout
 
     def _readadc_ads1015(self):
-        return 0.0
+        return self.adc.read_adc(Mq131.ADC_ADS1015_CHANNEL,
+                                 gain=Mq131.ADC_ADS1015_GAIN)
 
     # Calculates voltage from Analog to Digital Converter in medium voltage (mV)
     def _voltage_adc(self, adc_avg):
-        voltage = int(round(((adc_avg * VREF * 2) / RESOLUTION), 0)) + CALIBRATION
-        return voltage
+        if self.adc_type == ADCType.MCP3002:
+            self._voltage_mcp3002(adc_avg)
+        elif self.adc_type == ADCType.ADS1015:
+            self._voltage_ads1015(adc_avg)
+
+    def _voltage_mcp3002(self, adc_avg):
+        return int(round(((adc_avg * VREF * 2) / RESOLUTION_MQ3002), 0)) + CALIBRATION
+
+    def _voltage_ads1015(self, adc_avg):
+        return int(round(((adc_avg * VREF * 2) / RESOLUTION_ADS1015), 0)) + CALIBRATION
 
     def _adc_average(self):
         # Analog to Digital Conversion from the MQ3002 chip to get voltage

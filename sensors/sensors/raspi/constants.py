@@ -5,8 +5,9 @@ SPI_MOSI = 10  # Serial Peripheral Interface data out from MCP3002 chip
 SPI_MISO = 9   # Serial Peripheral Interface data in from MCP3002 chip
 SPI_CS = 8     # Serial Peripheral Interface chip select
 
-VREF = 3.3 * 1000   # V-Ref in mV (Vref = VDD for the MCP3002)
-RESOLUTION = 2**10  # for 10 bits of resolution
+VREF = 3.3 * 1000   # V-Ref in mV (Vref = VDD for the MCP3002 and ADS1015)
+RESOLUTION_MQ3002 = 2 ** 10  # for 10 bits of resolution for MCP3002
+RESOLUTION_ADS1015 = 2 ** 12 # for 12 bits of resolution for ADS1015
 CALIBRATION = 38    # in mV, to make up for the precision of the components
 
 # Begin, deprecated MQ131 constants (these have been moved into the MQ131 driver)
