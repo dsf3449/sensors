@@ -2,6 +2,7 @@ from enum import Enum
 
 from sensors.common.constants import CFG_SENSOR_ADC_MCP3002, CFG_SENSOR_ADC_ADS1015
 
+
 class ADCType(Enum):
     MCP3002 = 1
     ADS1015 = 2
