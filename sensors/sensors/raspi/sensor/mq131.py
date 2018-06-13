@@ -15,7 +15,7 @@ GPIO = import_raspi_gpio()
 from sensors.domain.sensor import OzoneSensor
 from sensors.common.constants import *
 from sensors.raspi.constants import *
-from sensors.raspi.sensor.adc import ADCType
+from sensors.domain.adc import ADCType
 
 
 class Mq131(OzoneSensor):
