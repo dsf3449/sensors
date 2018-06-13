@@ -36,10 +36,11 @@ class Mq131(OzoneSensor):
     CALIBRATION_SAMPLE_INTERVAL = 0.5
     ADC_DEFAULT = CFG_SENSOR_ADC_MCP3002
     ADC_ADS1015_CHANNEL = 0
-    ADC_ADS1015_GAIN = 1.0
+    ADC_ADS1015_GAIN = 1
 
     RO_MULT = math.exp((math.log(PC_CURVE_0 / 10) / PC_CURVE_1))
-    RESISTANCE_NUMERATOR = 1024.0 * 1000.0 * RL_MQ131
+    RESISTANCE_NUMERATOR_MCP3002 = 1024.0 * 1000.0 * RL_MQ131
+    RESISTANCE_NUMERATOR_ADS1015 = 4096.0 * 1000.0 * RL_MQ131
 
     def _initialize(self):
         if self.adc_type == ADCType.MCP3002:
@@ -137,7 +138,18 @@ class Mq131(OzoneSensor):
 
     def _mq_resistance(self, adc):
         """Calculates the sensor resistance (Rs)"""
-        return self.RESISTANCE_NUMERATOR / (adc - Mq131.RL_MQ131)
+        if self.adc_type == ADCType.MCP3002:
+            return self._mq_resistance_mcp3002(adc)
+        elif self.adc_type == ADCType.ADS1015:
+            return self._mq_resistance_ads1015(adc)
+
+    def _mq_resistance_mcp3002(self, adc):
+        """Calculates the sensor resistance (Rs)"""
+        return self.RESISTANCE_NUMERATOR_MCP3002 / (adc - Mq131.RL_MQ131)
+
+    def _mq_resistance_ads1015(self, adc):
+        """Calculates the sensor resistance (Rs)"""
+        return self.RESISTANCE_NUMERATOR_ADS1015 / (adc - Mq131.RL_MQ131)
 
     def _measure_Ro(self, rl=RL_MQ131):
         """Calculates the sensor resistance of clean air from the MQ131 sensor"""
