@@ -48,7 +48,7 @@ class Mq131(OzoneSensor):
             self._initialize_ads1015()
 
     def _initialize_ads1015(self):
-        self.adc = ADAFRUIT_ADC.ADS1015()
+        self.ads1015_adc = ADAFRUIT_ADC.ADS1015()
 
     def _initialize_mcp3002(self):
         # Initialize GPIO
@@ -82,7 +82,7 @@ class Mq131(OzoneSensor):
         if self.adc_type == ADCType.MCP3002:
             return self._readadc_mcp3002()
         elif self.adc_type == ADCType.ADS1015:
-            return self._initialize_ads1015()
+            return self._readadc_ads1015()
 
     def _readadc_mcp3002(self):
         adcnum = 0
@@ -125,8 +125,8 @@ class Mq131(OzoneSensor):
         return adcout
 
     def _readadc_ads1015(self):
-        return self.adc.read_adc(Mq131.ADC_ADS1015_CHANNEL,
-                                 gain=Mq131.ADC_ADS1015_GAIN)
+        return self.ads1015_adc.read_adc(Mq131.ADC_ADS1015_CHANNEL,
+                                         gain=Mq131.ADC_ADS1015_GAIN)
 
     # Calculates voltage from Analog to Digital Converter in medium voltage (mV)
     def _voltage_adc(self, adc_avg):
