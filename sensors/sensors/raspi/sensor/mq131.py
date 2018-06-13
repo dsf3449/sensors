@@ -131,9 +131,9 @@ class Mq131(OzoneSensor):
     # Calculates voltage from Analog to Digital Converter in medium voltage (mV)
     def _voltage_adc(self, adc_avg):
         if self.adc_type == ADCType.MCP3002:
-            self._voltage_mcp3002(adc_avg)
+            return self._voltage_mcp3002(adc_avg)
         elif self.adc_type == ADCType.ADS1015:
-            self._voltage_ads1015(adc_avg)
+            return self._voltage_ads1015(adc_avg)
 
     def _voltage_mcp3002(self, adc_avg):
         return int(round(((adc_avg * VREF * 2) / RESOLUTION_MQ3002), 0)) + CALIBRATION
