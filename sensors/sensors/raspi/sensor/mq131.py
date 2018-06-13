@@ -64,16 +64,13 @@ class Mq131(OzoneSensor):
 
         # Average of 5 readings
         adc_avg = self._adc_average()
-        # Voltage for metadata
-        voltage = self._voltage_adc(adc_avg)
         # Get the Rs value (O3 concentration) from the average of the 5 readings
         rs = self._mq_resistance(adc_avg)
         # Get the Ro (Clean Air) value from the average of the 5 readings
         ratio = self._rs_over_ro_ratio(rs, self.r_o)
         ppm = self._calculate_ppm_o3(ratio, self.r_o)
         # Metadata
-        parameters = {"voltage": str(voltage),
-                      "Rs": str(rs),
+        parameters = {"Rs": str(rs),
                       "Ro": str(self.r_o),
                       "Rs_Ro_Ratio": str(ratio)}
         return ppm, parameters
@@ -127,19 +124,6 @@ class Mq131(OzoneSensor):
     def _readadc_ads1015(self):
         return self.ads1015_adc.read_adc(Mq131.ADC_ADS1015_CHANNEL,
                                          gain=Mq131.ADC_ADS1015_GAIN)
-
-    # Calculates voltage from Analog to Digital Converter in medium voltage (mV)
-    def _voltage_adc(self, adc_avg):
-        if self.adc_type == ADCType.MCP3002:
-            return self._voltage_mcp3002(adc_avg)
-        elif self.adc_type == ADCType.ADS1015:
-            return self._voltage_ads1015(adc_avg)
-
-    def _voltage_mcp3002(self, adc_avg):
-        return int(round(((adc_avg * VREF * 2) / RESOLUTION_MQ3002), 0)) + CALIBRATION
-
-    def _voltage_ads1015(self, adc_avg):
-        return int(round(((adc_avg * VREF * 2) / RESOLUTION_ADS1015), 0)) + CALIBRATION
 
     def _adc_average(self):
         # Analog to Digital Conversion from the MQ3002 chip to get voltage
