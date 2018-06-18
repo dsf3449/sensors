@@ -152,7 +152,7 @@ class Mq131(OzoneSensor):
         """Calculates the sensor resistance (Rs)"""
         return self.RESISTANCE_NUMERATOR_ADS1015 / (adc - Mq131.RL_MQ131)
 
-    def _measure_Ro(self, rl=RL_MQ131):
+    def calibrate_Ro(self, rl=RL_MQ131):
         """Calculates the sensor resistance of clean air from the MQ131 sensor"""
         self._initialize()
 
