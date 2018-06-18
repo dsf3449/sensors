@@ -1,5 +1,5 @@
 """
-Driver for MQ131 gas sensor for Raspberry Pi 3 with MCP3002 ADC.
+Driver for MQ131 gas sensor for Raspberry Pi 3 with MCP3002 or ADS1015 ADC.
 This driver is based on the Arduino driver that can be found here:
     https://github.com/empierre/arduino/blob/master/AirQuality-Multiple_Gas_Sensor1_4.ino
 MCP3002-specific code based on:
@@ -73,7 +73,8 @@ class Mq131(OzoneSensor):
         # Metadata
         parameters = {"Rs": str(rs),
                       "Ro": str(self.r_o),
-                      "Rs_Ro_Ratio": str(ratio)}
+                      "Rs_Ro_Ratio": str(ratio),
+                      "adc_avg": str(adc_avg)}
         return ppm, parameters
 
     def _readadc(self):
