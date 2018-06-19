@@ -19,7 +19,7 @@ class Sm50(OzoneSensor):
     READ_SAMPLE_INTERVAL = 0.05
     ADC_ADS1015_CHANNEL = 2
     ADC_ADS1015_GAIN = 1
-    ADC_ADS1015_MAX = 4096
+    SM50_DN_MAX = 255
     SM50_MAX_PPM = 0.5
 
     def _initialize(self):
@@ -51,7 +51,8 @@ class Sm50(OzoneSensor):
     @staticmethod
     def _calculate_ppm_o3(adc):
         """Calculate the final concentration value"""
-        return (adc / Sm50.ADC_ADS1015_MAX) * Sm50.SM50_MAX_PPM
+        assert adc <= Sm50.SM50_DN_MAX
+        return (adc / Sm50.SM50_DN_MAX) * Sm50.SM50_MAX_PPM
 
     def __init__(self, typ, *args, **kwargs):
         super().__init__(typ, *args, **kwargs)
