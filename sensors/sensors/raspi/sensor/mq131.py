@@ -128,8 +128,7 @@ class Mq131(OzoneSensor):
                                          gain=Mq131.ADC_ADS1015_GAIN)
 
     def _adc_average(self):
-        # Analog to Digital Conversion from the MQ3002 chip to get voltage
-        # Get 5 reading to get a stable value
+        # Get 5 readings from the ADC to get a stable value
         adc_avg = 0.0
         for i in range(0, Mq131.READ_SAMPLE_TIMES):
             adc_avg += self._readadc()
