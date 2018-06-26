@@ -34,6 +34,11 @@ def readlineCRtest(port):
 
 
 def readlineCR(port):
+    """
+    Output values are explained here: https://www.dfrobot.com/wiki/index.php/PM2.5_laser_dust_sensor_SKU:SEN0177#Communication_protocol
+    :param port:
+    :return:
+    """
     data = []
     summation = 0
     data.append(ord(port.read()))
