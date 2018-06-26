@@ -76,7 +76,7 @@ setup(
                       'requests-toolbelt',
                       'ruamel.yaml<0.15',
                       'RPi.GPIO',
-                      'serial',
+                      'pyserial',
                       'py-opc',
                       'adafruit-ads1x15'
                       ],
