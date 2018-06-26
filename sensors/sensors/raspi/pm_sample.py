@@ -68,7 +68,7 @@ port = serial.Serial("/dev/serial0", baudrate=9600, timeout=2)
 while True:
     boxOfStuff = readlineCR(port)
 
-    port.write("I typed stuff")
+    port.write(b"I typed stuff")
     if boxOfStuff.valid:
         print(boxOfStuff.pm10, boxOfStuff.pm25, boxOfStuff.pm100, boxOfStuff.num3, boxOfStuff.num5, boxOfStuff.num10,
               boxOfStuff.num25, boxOfStuff.num50, boxOfStuff.num100)
