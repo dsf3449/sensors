@@ -9,6 +9,7 @@ from sensors.raspi.sensor import sm50
 from sensors.simulator.sensor import mq131 as sim_mq131
 from sensors.simulator.sensor import dht11 as sim_dht11
 from sensors.simulator.sensor import sm50 as sim_sm50
+from sensors.simulator.sensor import sen0177 as sim_sen0177
 
 
 def get_sensor_instance_simulator(typ, *args, **kwargs):
@@ -18,6 +19,8 @@ def get_sensor_instance_simulator(typ, *args, **kwargs):
         return sim_dht11.Dht11(typ, *args, **kwargs)
     elif typ == CFG_SENSOR_TYPE_SM50:
         return sim_sm50.Sm50(typ, *args, **kwargs)
+    elif typ == CFG_SENSOR_TYPE_SEN0177:
+        return sim_sen0177.Sen0177(typ, *args, **kwargs)
     else:
         raise ValueError("Unknown sensor type {0}".format(typ))
 

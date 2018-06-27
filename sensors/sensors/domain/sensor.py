@@ -131,7 +131,7 @@ class AirTempRHSensor(Sensor):
 
 
 class ParticulateMatterSensor(Sensor):
-    VALID_OBSERVE_PROPERTIES = {CFG_OBSERVED_PROPERTY_PM}
+    VALID_OBSERVED_PROPERTIES = {CFG_OBSERVED_PROPERTY_PM}
 
     def _particulates(self):
         """
