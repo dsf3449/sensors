@@ -61,10 +61,13 @@ class Sen0177(ParticulateMatterSensor):
         try:
             port = serial.Serial("/dev/serial0", baudrate=9600, timeout=2)
             data = Sen0177._read_sen0177(port)
-            result = float(data.pm25)
-            parameters = {"pm1": str(data.pm10),
-                          "pm10": str(data.pm100)}
-            return result, parameters
+            if data.valid:
+                result = float(data.pm25)
+                parameters = {"pm1": str(data.pm10),
+                              "pm10": str(data.pm100)}
+                return result, parameters
+            else:
+                return None, None
         finally:
             port.close()
 
