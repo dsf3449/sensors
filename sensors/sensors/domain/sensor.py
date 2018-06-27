@@ -128,3 +128,33 @@ class AirTempRHSensor(Sensor):
             self.timestamp = datetime.now(timezone.utc)
             self.temperature = temperature
             self.humidity = humidity
+
+
+class ParticulateMatterSensor(Sensor):
+    VALID_OBSERVE_PROPERTIES = {CFG_OBSERVED_PROPERTY_PM}
+
+    def _particulates(self):
+        """
+        Return tuple consisting of result, and parameters. Where:
+        Result is the concentration of PM 2.5 expressed in ug/m3.
+        Parameters is a dict of strings listing concentrations of
+        other particle sizes (e.g. PM 1.0, PM 10.0) as well as metadata,
+        which can include particle size distribution.
+        :return:
+        """
+        raise NotImplementedError
+
+    def __init__(self, typ, *args, **kwargs):
+        super().__init__(typ, *args, **kwargs)
+
+        # Validate observed properties
+        if len(args) != 1:
+            raise ValueError("Sensor {0} must only have one observed property, but {1} were provided.". \
+                             format(self.NAME, len(args)))
+        op = args[0]
+        if op.name not in self.VALID_OBSERVED_PROPERTIES:
+            raise ValueError("Sensor {0} was configured with invalid observed property {1}". \
+                             format(self.NAME, op.name))
+
+        # Register with observation generation function lookup table
+        self.obs_func_tab[op.name] = self._particulates
