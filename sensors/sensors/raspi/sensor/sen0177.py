@@ -58,6 +58,7 @@ class Sen0177(ParticulateMatterSensor):
         return Sen0177.Sen0177Result(True, data[3], data[4], data[5], data[9], data[10], data[11], data[12], data[13], data[14])
 
     def _particulates(self):
+        port = None
         try:
             port = serial.Serial("/dev/serial0", baudrate=9600, timeout=2)
             data = Sen0177._read_sen0177(port)
@@ -69,7 +70,8 @@ class Sen0177(ParticulateMatterSensor):
             else:
                 return None, None
         finally:
-            port.close()
+            if port is not None:
+                port.close()
 
     def __init__(self, typ, *args, **kwargs):
         super().__init__(typ, *args, **kwargs)
