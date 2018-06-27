@@ -18,7 +18,7 @@ class Mq131(OzoneSensor):
         parameters = {"Rs": str(r_s),
                       "Ro": str(self.r_o),
                       "Rs_Ro_Ratio": str(r_s / self.r_o),
-                      "adc_avg": str(random(0, 1023))}
+                      "adc_avg": str(random.uniform(0, 1023))}
         return result, parameters
 
     def __init__(self, typ, *args, **kwargs):

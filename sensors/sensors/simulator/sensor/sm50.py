@@ -9,7 +9,7 @@ class Sm50(OzoneSensor):
 
     def _ozone(self):
         result = random.uniform(0.001, 0.5)
-        parameters = {"adc_avg": str(random(0, 255))}
+        parameters = {"adc_avg": str(random.uniform(0, 255))}
         return result, parameters
 
     def __init__(self, typ, *args, **kwargs):
