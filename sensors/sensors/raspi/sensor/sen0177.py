@@ -27,7 +27,7 @@ class Sen0177(ParticulateMatterSensor):
         :param upper:
         :return:
         """
-        return int(bin(lower)[2:].rjust(8, '0') + bin(upper)[2:].rjust(8, '0'), 2)
+        return int(bin(upper)[2:].rjust(8, '0') + bin(lower)[2:].rjust(8, '0'), 2)
 
     @staticmethod
     def _read_sen0177(port):
@@ -62,13 +62,18 @@ class Sen0177(ParticulateMatterSensor):
         try:
             port = serial.Serial("/dev/serial0", baudrate=9600, timeout=2)
             data = Sen0177._read_sen0177(port)
+            result = None
+            pm1 = None
+            pm10 = None
             if data.valid:
                 result = float(data.pm25)
-                parameters = {"pm1": str(data.pm10),
-                              "pm10": str(data.pm100)}
-                return result, parameters
+                pm1 = data.pm10
+                pm10 = data.pm100
             else:
-                return None, None
+                result = pm1 = pm10 = float('nan')
+            parameters = {"pm1": str(pm1),
+                          "pm10": str(pm10)}
+            return result, parameters
         finally:
             if port is not None:
                 port.close()
