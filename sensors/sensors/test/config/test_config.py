@@ -8,6 +8,7 @@ from sensors.config import Config, ConfigurationError
 from sensors.domain.sensor import Sensor
 from sensors.domain.observed_property import ObservedProperty
 from sensors.transport.https import HttpsTransport
+from sensors.domain.adc import ADCType
 
 
 class TestConfiguration(unittest.TestCase):
@@ -77,7 +78,7 @@ class TestConfiguration(unittest.TestCase):
         self.assertEqual(False, t.verify_ssl())
 
     def test_config_one_ro(self):
-        os.environ[ENV_YAML_PATH] = '../data/config1_Ro.yml'
+        os.environ[ENV_YAML_PATH] = '../data/config1_props.yml'
         c = Config(unittest=True).config
 
         # Simulator
@@ -101,6 +102,7 @@ class TestConfiguration(unittest.TestCase):
         s = sensors[0]
         self.assertTrue(isinstance(s, Sensor))
         self.assertEqual(CFG_SENSOR_TYPE_MQ131, s.typ)
+        self.assertEqual(s.adc_type, ADCType.MCP3002)
         ops = s.observed_properties
         self.assertEqual(len(ops), 1)
         # First (only) observed property
@@ -108,6 +110,24 @@ class TestConfiguration(unittest.TestCase):
         self.assertTrue(isinstance(o, ObservedProperty))
         self.assertEqual(o.name, 'ozone')
         self.assertEqual(o.datastream_id, '1af6b695-07c0-4024-aeb8-4ddf64dbf458')
+
+    def test_config_adc_non_default(self):
+        os.environ[ENV_YAML_PATH] = '../data/config1_adc.yml'
+        c = Config(unittest=True).config
+
+        # Sensors
+        sensors = c[CFG_SENSORS]
+        self.assertEqual(len(sensors), 2)
+        # 1st sensor
+        s = sensors[0]
+        self.assertTrue(isinstance(s, Sensor))
+        self.assertEqual(CFG_SENSOR_TYPE_MQ131, s.typ)
+        self.assertEqual(s.adc_type, ADCType.ADS1015)
+
+    def test_config_adc_invalid(self):
+        os.environ[ENV_YAML_PATH] = '../data/config1_adc_invalid.yml'
+        with self.assertRaises(ValueError):
+            c = Config(unittest=True).config
 
     def test_config_one_dupe_ds_id(self):
         os.environ[ENV_YAML_PATH] = '../data/config1-dupe-ds_id.yml'

@@ -60,7 +60,7 @@ class ADCSPI_AEROQUAL_SM50():
 
     def voltageADC(self):
         """Calculates voltage from Analog to Digital Converter in medium voltage (mV)"""
-        voltage = int(round(((self.adc_average() * constants.VREF * 2) / constants.RESOLUTION), 0)) + constants.CALIBRATION
+        voltage = int(round(((self.adc_average() * constants.VREF * 2) / constants.RESOLUTION_MQ3002), 0)) + constants.CALIBRATION
         return voltage
 
     def adc_average(self):

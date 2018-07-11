@@ -36,7 +36,7 @@ class Config:
                 raise_config_error("Unable to parse configuration in YAML {0}.".format(yaml_path))
             if CFG_THING not in config_raw:
                 raise_config_error("Element {0} not configured in YAML {1}.".format(CFG_THING,
-                                                                                     yaml_path))
+                                                                                    yaml_path))
             if CFG_SENSORS not in config_raw:
                 raise_config_error("Element {0} not configured in YAML {1}.".
                                    format(CFG_SENSORS, yaml_path))
