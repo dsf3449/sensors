@@ -77,7 +77,8 @@ setup(
                       'ruamel.yaml<0.15',
                       'RPi.GPIO',
                       'pyserial',
-                      'py-opc',
+                      'spidev==3.2',
+                      'py-opc==1.6.0',
                       'adafruit-ads1x15'
                       ],
 
