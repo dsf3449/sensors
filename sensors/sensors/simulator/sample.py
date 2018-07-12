@@ -122,11 +122,11 @@ def main():
     global logger
     logger = configure_logger(config)
 
-    start_date = datetime.datetime(year=args.startdate[0], month=args.startdate[1], day=args.startdate[2],
-                                   hour=args.startdate[3], minute=args.startdate[4])
+    start_date = datetime(year=args.startdate[0], month=args.startdate[1], day=args.startdate[2],
+                          hour=args.startdate[3], minute=args.startdate[4])
     print("Start date: {0}".format(str(start_date)))
 
-    date_interval = datetime.timedelta(minutes=args.dateint)
+    date_interval = timedelta(minutes=args.dateint)
     print("Date interval: {0} minutes".format(str(date_interval)))
 
     sample(start_date=start_date, date_interval=date_interval)

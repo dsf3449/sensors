@@ -1,5 +1,5 @@
 """
-Driver for MQ131 gas sensor for Raspberry Pi 3 with MCP3002 ADC.
+Driver for MQ131 gas sensor for Raspberry Pi 3 with MCP3002 or ADS1015 ADC.
 This driver is based on the Arduino driver that can be found here:
     https://github.com/empierre/arduino/blob/master/AirQuality-Multiple_Gas_Sensor1_4.ino
 MCP3002-specific code based on:
@@ -11,9 +11,13 @@ import time
 from sensors.raspi import import_raspi_gpio
 GPIO = import_raspi_gpio()
 
+from sensors.raspi import import_adafruit_adc
+ADAFRUIT_ADC = import_adafruit_adc()
+
 from sensors.domain.sensor import OzoneSensor
 from sensors.common.constants import *
 from sensors.raspi.constants import *
+from sensors.domain.adc import ADCType
 
 
 class Mq131(OzoneSensor):
@@ -30,11 +34,24 @@ class Mq131(OzoneSensor):
     READ_SAMPLE_INTERVAL = 0.05
     CALIBRATION_SAMPLE_TIMES = 50
     CALIBRATION_SAMPLE_INTERVAL = 0.5
+    ADC_DEFAULT = CFG_SENSOR_ADC_MCP3002
+    ADC_ADS1015_CHANNEL = 0
+    ADC_ADS1015_GAIN = 1
 
     RO_MULT = math.exp((math.log(PC_CURVE_0 / 10) / PC_CURVE_1))
-    RESISTANCE_NUMERATOR = 1024.0 * 1000.0 * RL_MQ131
+    RESISTANCE_NUMERATOR_MCP3002 = 1024.0 * 1000.0 * RL_MQ131
+    RESISTANCE_NUMERATOR_ADS1015 = 4096.0 * 1000.0 * RL_MQ131
 
-    def _initialize_gpio(self):
+    def _initialize(self):
+        if self.adc_type == ADCType.MCP3002:
+            self._initialize_mcp3002()
+        elif self.adc_type == ADCType.ADS1015:
+            self._initialize_ads1015()
+
+    def _initialize_ads1015(self):
+        self.ads1015_adc = ADAFRUIT_ADC.ADS1015()
+
+    def _initialize_mcp3002(self):
         # Initialize GPIO
         GPIO.setmode(GPIO.BCM)
         # set up the SPI interface pins
@@ -44,25 +61,29 @@ class Mq131(OzoneSensor):
         GPIO.setup(SPI_CS, GPIO.OUT)
 
     def _ozone(self):
-        self._initialize_gpio()
+        self._initialize()
 
         # Average of 5 readings
         adc_avg = self._adc_average()
-        # Voltage for metadata
-        voltage = self._voltage_adc(adc_avg)
         # Get the Rs value (O3 concentration) from the average of the 5 readings
         rs = self._mq_resistance(adc_avg)
         # Get the Ro (Clean Air) value from the average of the 5 readings
         ratio = self._rs_over_ro_ratio(rs, self.r_o)
         ppm = self._calculate_ppm_o3(ratio, self.r_o)
         # Metadata
-        parameters = {"voltage": str(voltage),
-                      "Rs": str(rs),
+        parameters = {"Rs": str(rs),
                       "Ro": str(self.r_o),
-                      "Rs_Ro_Ratio": str(ratio)}
+                      "Rs_Ro_Ratio": str(ratio),
+                      "adc_avg": str(adc_avg)}
         return ppm, parameters
 
     def _readadc(self):
+        if self.adc_type == ADCType.MCP3002:
+            return self._readadc_mcp3002()
+        elif self.adc_type == ADCType.ADS1015:
+            return self._readadc_ads1015()
+
+    def _readadc_mcp3002(self):
         adcnum = 0
         clockpin = SPI_CLK
         mosipin = SPI_MOSI
@@ -95,35 +116,44 @@ class Mq131(OzoneSensor):
             GPIO.output(clockpin, True)
             GPIO.output(clockpin, False)
             adcout <<= 1
-            if (GPIO.input(misopin)):
+            if GPIO.input(misopin):
                 adcout |= 0x1
         GPIO.output(cspin, True)
 
         adcout /= 2  # first bit is 'null' so drop it
         return adcout
 
-    # Calculates voltage from Analog to Digital Converter in medium voltage (mV)
-    def _voltage_adc(self, adc_avg):
-        voltage = int(round(((adc_avg * VREF * 2) / RESOLUTION), 0)) + CALIBRATION
-        return voltage
+    def _readadc_ads1015(self):
+        return self.ads1015_adc.read_adc(Mq131.ADC_ADS1015_CHANNEL,
+                                         gain=Mq131.ADC_ADS1015_GAIN)
 
     def _adc_average(self):
-        # Analog to Digital Conversion from the MQ3002 chip to get voltage
-        # Get 5 reading to get a stable value
+        # Get 5 readings from the ADC to get a stable value
         adc_avg = 0.0
         for i in range(0, Mq131.READ_SAMPLE_TIMES):
             adc_avg += self._readadc()
             time.sleep(Mq131.READ_SAMPLE_INTERVAL)  # Every five seconds
-            adc_avg = adc_avg / Mq131.READ_SAMPLE_TIMES
+        adc_avg = adc_avg / Mq131.READ_SAMPLE_TIMES
         return adc_avg
 
     def _mq_resistance(self, adc):
         """Calculates the sensor resistance (Rs)"""
-        return self.RESISTANCE_NUMERATOR / (adc - Mq131.RL_MQ131)
+        if self.adc_type == ADCType.MCP3002:
+            return self._mq_resistance_mcp3002(adc)
+        elif self.adc_type == ADCType.ADS1015:
+            return self._mq_resistance_ads1015(adc)
 
-    def _measure_Ro(self, rl=RL_MQ131):
+    def _mq_resistance_mcp3002(self, adc):
+        """Calculates the sensor resistance (Rs)"""
+        return self.RESISTANCE_NUMERATOR_MCP3002 / (adc - Mq131.RL_MQ131)
+
+    def _mq_resistance_ads1015(self, adc):
+        """Calculates the sensor resistance (Rs)"""
+        return self.RESISTANCE_NUMERATOR_ADS1015 / (adc - Mq131.RL_MQ131)
+
+    def calibrate_Ro(self, rl=RL_MQ131):
         """Calculates the sensor resistance of clean air from the MQ131 sensor"""
-        self._initialize_gpio()
+        self._initialize()
 
         val = 0.0
         for i in range(Mq131.CALIBRATION_SAMPLE_TIMES):
@@ -149,3 +179,4 @@ class Mq131(OzoneSensor):
     def __init__(self, typ, *args, **kwargs):
         super().__init__(typ, *args, **kwargs)
         self.r_o = float(self.properties.get(Mq131.PROPERTY_RO, Mq131.RO_DEFAULT_MQ131))
+        self.adc_type = ADCType.from_string(self.properties.get(CFG_PROPERTY_ADC, Mq131.ADC_DEFAULT))
