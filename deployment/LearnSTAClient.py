@@ -242,6 +242,54 @@ class LearnSTAClient:
 
         except:
             return 'Error'
+
+    def createdatastreamQAQC(self,row):
+        session = requests.session()
+        if row['sensortype']!='mq131':
+            return ''
+        try:
+            # Get Token
+            jwt_token = self.jwt_authenticate()
+            print (jwt_token)
+            headers = {'Content-Type': 'application/json','Authorization': "Bearer {token}".format(token=jwt_token[0])}
+
+            # Create Datastream
+            print ("Creating Datastreams QAQC")
+            dsjson =json.dumps(self.createDatastream(row['stathingid'],row['dssensorid'],row['dsobspropertyid'],row['QAQC_dsname'],
+                                                     row['dsdesc'],row['dsmunit'],row['dsmsymbol'],
+                                                     row['dsmdefinition'],row['dsobstype']), ensure_ascii=False)
+            r = session.post(self.baseurl+"/Datastreams", headers=headers, data=dsjson, verify=self.VERIFY_SSL)
+            dsstr=r.headers["Location"]
+            dsstrid=dsstr[dsstr.find("(")+1:dsstr.find(")")]
+            print (dsstr,dsstrid)
+            return dsstrid
+
+        except:
+            return 'Error'
+    
+    def createdatastreamAQI(self,row):
+        session = requests.session()
+        if row['sensortype']!='mq131':
+            return ''
+        try:
+            # Get Token
+            jwt_token = self.jwt_authenticate()
+            print (jwt_token)
+            headers = {'Content-Type': 'application/json','Authorization': "Bearer {token}".format(token=jwt_token[0])}
+
+            # Create Datastream
+            print ("Creating Datastreams AQI")
+            dsjson =json.dumps(self.createDatastream(row['stathingid'],row['dssensorid'],row['AQI_dsobspropertyid'],row['AQI_dsname'],
+                                                     row['AQI_dsdesc'],row['AQI_dsmunit'],row['AQI_dsmsymbol'],
+                                                     row['AQI_dsmdefinition'],row['AQI_dsobstype']), ensure_ascii=False)
+            r = session.post(self.baseurl+"/Datastreams", headers=headers, data=dsjson, verify=self.VERIFY_SSL)
+            dsstr=r.headers["Location"]
+            dsstrid=dsstr[dsstr.find("(")+1:dsstr.find(")")]
+            print (dsstr,dsstrid)
+            return dsstrid
+
+        except:
+            return 'Error'
         
     def Getuuid(self,row):
         return uuid.uuid4()
@@ -259,6 +307,8 @@ class LearnSTAClient:
         dfdatastreams=pd.read_csv(inputdatastreamsfilepath)
         dfdatastreams=dfdatastreams.merge(dfthings,on='devicenum', how='left')
         dfdatastreams['stadatastreamid'] =dfdatastreams.apply(self.createdatastream, axis=1)
+        dfdatastreams['QAQC_stadatastreamid'] =dfdatastreams.apply(self.createdatastreamQAQC, axis=1)
+        dfdatastreams['AQI_stadatastreamid'] =dfdatastreams.apply(self.createdatastreamAQI, axis=1)
         dfdatastreams.to_csv(outputdatastreamsfilepath,index=False)
     
     def createagentssql(self, inputthingsfilepath, agentsfilepath):
