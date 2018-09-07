@@ -23,6 +23,7 @@ import random
 from pandas.io.json import json_normalize
 # import aqi
 import uuid
+from datetime import datetime
 
 from IPython.core.debugger import set_trace
 
@@ -304,7 +305,7 @@ class LearnSTAClient:
         
     def createdatastreams(self,inputdatastreamsfilepath,outputdatastreamsfilepath,inputthingsfilepath):
         dfthings=pd.read_csv(inputthingsfilepath)
-        dfdatastreams=pd.read_csv(inputdatastreamsfilepath)
+        dfdatastreams=pd.read_csv(inputdatastreamsfilepath, encoding='latin1')
         dfdatastreams=dfdatastreams.merge(dfthings,on='devicenum', how='left')
         dfdatastreams['stadatastreamid'] =dfdatastreams.apply(self.createdatastream, axis=1)
         dfdatastreams['QAQC_stadatastreamid'] =dfdatastreams.apply(self.createdatastreamQAQC, axis=1)
@@ -313,7 +314,7 @@ class LearnSTAClient:
     
     def createagentssql(self, inputthingsfilepath, agentsfilepath):
         dfthings=pd.read_csv(inputthingsfilepath)
-        filepath = agentsfilepath + "/agents-append-" + now.isoformat() + ".sql"
+        filepath = agentsfilepath + "/agents-append-" + datetime.now().isoformat().replace(':','_') + ".sql"
         with open(filepath, 'w') as cfile:
             for idx, row in dfthings.iterrows():
                 cfile.write("--Small thing {0}\n".format(idx))
