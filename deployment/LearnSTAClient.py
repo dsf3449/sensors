@@ -326,7 +326,7 @@ class LearnSTAClient:
         dfdatastreams=pd.read_csv(inputdatastreamsfilepath)
         dfsta=dfdatastreams.merge(dfthings,on='devicenum', how='left')
         devices = list(dfsta['devicenum'].unique())
-        for devicenum in devices:
+        for i, devicenum in enumerate(devices):
             filepath = ymlfilepath+"/"+str(devicenum)+".yml"
             with open(filepath, 'w') as cfile:
                 #stathingid=str(dfdevice[dfdevice['devicenum']==devnum].iloc[0]['stathingid'])
@@ -355,7 +355,12 @@ class LearnSTAClient:
                      # loop through observed properties
                         cfile.write("      - name: "+sname+'\n')
                         stadsid=list(dfdatastreams[(dfdatastreams['devicenum']==devicenum) & (dfdatastreams['sensortype']==stype) & (dfdatastreams['sensorname']==sname)]['stadatastreamid'].unique())
-                        cfile.write("        datastream_id: "+stadsid[0].replace("'", "")+'\n')                    
+                        cfile.write("        datastream_id: "+stadsid[0].replace("'", "")+'\n')
+                    if stype == 'mq131' and dfthings['large_thing'].iloc[i]:
+                        # Configure non-default ADC for large sensor boxes
+                        cfile.write("    properties:\n")
+                        cfile.write("      - Ro: 2.501\n")
+                        cfile.write("      - adc: ads1015\n")
                 cfile.write("transports:"+'\n')
                 cfile.write("  - type: https"+'\n')
                 cfile.write("    properties:"+'\n')
