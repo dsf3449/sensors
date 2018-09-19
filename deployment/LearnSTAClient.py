@@ -141,23 +141,23 @@ class LearnSTAClient:
                          ,observationtype):
 
         thing = {}
-        thing['@iot.id']=thingid.replace("'", "")
+        thing["@iot.id"]=thingid.replace("'", "")
         sensor = {}
-        sensor['@iot.id']=sensorid.replace("'", "")
+        sensor["@iot.id"]=sensorid.replace("'", "")
         obproperty = {}
-        obproperty['@iot.id']=observedpropertyid.replace("'", "")
+        obproperty["@iot.id"]=observedpropertyid.replace("'", "")
         unitOfMeasurement={}
-        unitOfMeasurement['name']=measurementunit
-        unitOfMeasurement['symbol']=measurementsymbol
-        unitOfMeasurement['definition']=measurementdefinition
+        unitOfMeasurement["name"]=measurementunit
+        unitOfMeasurement["symbol"]=measurementsymbol
+        unitOfMeasurement["definition"]=measurementdefinition
         stadatastream={}
-        stadatastream['Thing']=thing
-        stadatastream['Sensor']=sensor
-        stadatastream['ObservedProperty']=obproperty
-        stadatastream['name']=name
-        stadatastream['description']=description
-        stadatastream['unitOfMeasurement']=unitOfMeasurement
-        stadatastream['observationType']=observationtype
+        stadatastream["Thing"]=thing
+        stadatastream["Sensor"]=sensor
+        stadatastream["ObservedProperty"]=obproperty
+        stadatastream["name"]=name
+        stadatastream["description"]=description
+        stadatastream["unitOfMeasurement"]=unitOfMeasurement
+        stadatastream["observationType"]=observationtype
         print (stadatastream)
         return stadatastream
 
@@ -248,49 +248,51 @@ class LearnSTAClient:
         session = requests.session()
         if row['sensortype']!='mq131':
             return ''
-        try:
+#         try:
             # Get Token
-            jwt_token = self.jwt_authenticate()
-            print (jwt_token)
-            headers = {'Content-Type': 'application/json','Authorization': "Bearer {token}".format(token=jwt_token[0])}
+        jwt_token = self.jwt_authenticate()
+        print (jwt_token)
+        headers = {'Content-Type': 'application/json','Authorization': "Bearer {token}".format(token=jwt_token[0])}
 
-            # Create Datastream
-            print ("Creating Datastreams QAQC")
-            dsjson =json.dumps(self.createDatastream(row['stathingid'],row['dssensorid'],row['dsobspropertyid'],row['QAQC_dsname'],
-                                                     row['dsdesc'],row['dsmunit'],row['dsmsymbol'],
-                                                     row['dsmdefinition'],row['dsobstype']), ensure_ascii=False)
-            r = session.post(self.baseurl+"/Datastreams", headers=headers, data=dsjson, verify=self.VERIFY_SSL)
-            dsstr=r.headers["Location"]
-            dsstrid=dsstr[dsstr.find("(")+1:dsstr.find(")")]
-            print (dsstr,dsstrid)
-            return dsstrid
+        # Create Datastream
+        print ("Creating Datastreams QAQC")
+        dsjson =json.dumps(self.createDatastream(row['stathingid'],row['dssensorid'],row['dsobspropertyid'],row['QAQC_dsname'],
+                                                 row['dsdesc'],row['dsmunit'],row['dsmsymbol'],
+                                                 row['dsmdefinition'],row['dsobstype']), ensure_ascii=False)
+        r = session.post(self.baseurl+"/Datastreams", headers=headers, data=dsjson, verify=self.VERIFY_SSL)
+        dsstr=r.headers["Location"]
+        dsstrid=dsstr[dsstr.find("(")+1:dsstr.find(")")]
+        print (dsstr,dsstrid)
+        return dsstrid
+#        return ""
 
-        except:
-            return 'Error'
+#         except:
+#             return 'Error'
     
     def createdatastreamAQI(self,row):
         session = requests.session()
         if row['sensortype']!='mq131':
             return ''
-        try:
+#         try:
             # Get Token
-            jwt_token = self.jwt_authenticate()
-            print (jwt_token)
-            headers = {'Content-Type': 'application/json','Authorization': "Bearer {token}".format(token=jwt_token[0])}
+        jwt_token = self.jwt_authenticate()
+        print (jwt_token)
+        headers = {'Content-Type': 'application/json','Authorization': "Bearer {token}".format(token=jwt_token[0])}
 
-            # Create Datastream
-            print ("Creating Datastreams AQI")
-            dsjson =json.dumps(self.createDatastream(row['stathingid'],row['dssensorid'],row['AQI_dsobspropertyid'],row['AQI_dsname'],
-                                                     row['AQI_dsdesc'],row['AQI_dsmunit'],row['AQI_dsmsymbol'],
-                                                     row['AQI_dsmdefinition'],row['AQI_dsobstype']), ensure_ascii=False)
-            r = session.post(self.baseurl+"/Datastreams", headers=headers, data=dsjson, verify=self.VERIFY_SSL)
-            dsstr=r.headers["Location"]
-            dsstrid=dsstr[dsstr.find("(")+1:dsstr.find(")")]
-            print (dsstr,dsstrid)
-            return dsstrid
+        # Create Datastream
+        print ("Creating Datastreams AQI")
+        dsjson =json.dumps(self.createDatastream(row['stathingid'],row['dssensorid'],row['AQI_dsobspropertyid'],row['AQI_dsname'],
+                                                 row['AQI_dsdesc'],row['AQI_dsmunit'],row['AQI_dsmsymbol'],
+                                                 row['AQI_dsmdefinition'],row['AQI_dsobstype']), ensure_ascii=False)
+        r = session.post(self.baseurl+"/Datastreams", headers=headers, data=dsjson, verify=self.VERIFY_SSL)
+        dsstr=r.headers["Location"]
+        dsstrid=dsstr[dsstr.find("(")+1:dsstr.find(")")]
+        print (dsstr,dsstrid)
+        return dsstrid
+#        return ""
 
-        except:
-            return 'Error'
+#         except:
+#             return 'Error'
         
     def Getuuid(self,row):
         return uuid.uuid4()
@@ -311,6 +313,16 @@ class LearnSTAClient:
         dfdatastreams['QAQC_stadatastreamid'] =dfdatastreams.apply(self.createdatastreamQAQC, axis=1)
         dfdatastreams['AQI_stadatastreamid'] =dfdatastreams.apply(self.createdatastreamAQI, axis=1)
         dfdatastreams.to_csv(outputdatastreamsfilepath,index=False)
+    
+    # custom function to add the QAQC, AQI datastreams.
+    def patchdatastreams(self,inputdatastreamsfilepath,outputdatastreamsfilepath,inputthingsfilepath):
+        #dfthings=pd.read_csv(inputthingsfilepath)
+        dfdatastreams=pd.read_csv(inputdatastreamsfilepath,encoding = "cp1252").head(1)   
+        dfdatastreams["AQI_dsmsymbol"]="ppm"
+        #dfdatastreams=dfdatastreams.merge(dfthings,on='devicenum', how='left')
+        dfdatastreams['QAQC_stadatastreamid'] =dfdatastreams.apply(self.createdatastreamQAQC, axis=1)
+        dfdatastreams['AQI_stadatastreamid'] =dfdatastreams.apply(self.createdatastreamAQI, axis=1)
+        dfdatastreams.to_csv(outputdatastreamsfilepath,index=False)   
     
     def createagentssql(self, inputthingsfilepath, agentsfilepath):
         dfthings=pd.read_csv(inputthingsfilepath)
