@@ -329,7 +329,7 @@ class LearnSTAClient:
         filepath = agentsfilepath + "/agents-append-" + datetime.now().isoformat().replace(':','_') + ".sql"
         with open(filepath, 'w') as cfile:
             for idx, row in dfthings.iterrows():
-                cfile.write("--Small thing {0}\n".format(idx))
+                cfile.write("--{0}\n".format(row['thname']))
                 cfile.write("insert into agents(id, key) values ('{jwt_id}', '{jwt_key}');\n".format(jwt_id=row['jwt_id'],
                                                                                                      jwt_key=row['jwt_key']))
                 
