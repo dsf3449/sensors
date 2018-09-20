@@ -17,15 +17,15 @@ import warnings
 import json
 import time
 import sys
-import datetime
 import json
 import random
 from pandas.io.json import json_normalize
 # import aqi
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from IPython.core.debugger import set_trace
+import traceback
 
 class LearnSTAClient:
 
@@ -39,12 +39,12 @@ class LearnSTAClient:
         self.VERIFY_SSL = VERIFY_SSL
         
     def jwt_authenticate(self):
-        
+        #traceback.print_stack()
         JWT_ID=self.authID
         JWT_KEY=self.authkey
         URL_AUTH =self.authurl
         VERIFY_SSL=self.VERIFY_SSL
-        AUTH_TTL=datetime.timedelta(minutes=5)
+        AUTH_TTL=timedelta(minutes=5)
         AUTH_TEMPLATE = '''{{"id":"{id}","key":"{key}"}}'''
         token = (self.authtoken, self.authtokents)
         session = requests.session()
@@ -77,7 +77,7 @@ class LearnSTAClient:
                 print ("Authentication failed with status code {0}".format(str(r.status_code)))
                 #raise AuthenticationException("Authentication failed with status code {0}".format(str(r.status_code)))
             else:
-                new_token = (r.json()["token"], datetime.datetime.utcnow())
+                new_token = (r.json()["token"], datetime.utcnow())
 
         return new_token
          
@@ -293,7 +293,25 @@ class LearnSTAClient:
 
 #         except:
 #             return 'Error'
-        
+
+    def do_patch_thing_name_and_desc(self, row):
+        session = requests.session()
+        headers = self.do_jwt_auth()
+        things_json = json.dumps({"name": row['thname'].strip("'"), "description": row['thdesc'].strip("'")})
+        url = self.baseurl+"/Things('{0}')".format(row['stathingid'].strip("'"))
+        r = session.patch(url, headers=headers, data=things_json, verify=self.VERIFY_SSL)
+        if r.status_code != 200 and r.status_code != 204:
+            raise Exception("PATCH {0} failed, response was {1}.  Body was: {2}".format(url, r.status_code, things_json))
+
+    def do_jwt_auth(self):
+        jwt_token = self.jwt_authenticate()
+        headers = {'Content-Type': 'application/json', 'Authorization': "Bearer {token}".format(token=jwt_token[0])}
+        return headers
+
+    def patch_thing_name_and_desc(self, outputthingsfilepath):
+        dfthings = pd.read_csv(outputthingsfilepath)
+        dfthings.apply(self.do_patch_thing_name_and_desc, axis=1)
+
     def Getuuid(self,row):
         return uuid.uuid4()
         
