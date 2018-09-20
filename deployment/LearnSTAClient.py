@@ -246,12 +246,12 @@ class LearnSTAClient:
 
     def createdatastreamQAQC(self,row):
         session = requests.session()
-        if row['sensortype']!='mq131':
+        if row['sensorname'] not in ('ozone', 'air_temperature', 'particulate_matter'):
             return ''
 #         try:
             # Get Token
         jwt_token = self.jwt_authenticate()
-        print (jwt_token)
+        # print (jwt_token)
         headers = {'Content-Type': 'application/json','Authorization': "Bearer {token}".format(token=jwt_token[0])}
 
         # Create Datastream
@@ -259,40 +259,37 @@ class LearnSTAClient:
         dsjson =json.dumps(self.createDatastream(row['stathingid'],row['dssensorid'],row['dsobspropertyid'],row['QAQC_dsname'],
                                                  row['dsdesc'],row['dsmunit'],row['dsmsymbol'],
                                                  row['dsmdefinition'],row['dsobstype']), ensure_ascii=False)
-        r = session.post(self.baseurl+"/Datastreams", headers=headers, data=dsjson, verify=self.VERIFY_SSL)
-        dsstr=r.headers["Location"]
-        dsstrid=dsstr[dsstr.find("(")+1:dsstr.find(")")]
-        print (dsstr,dsstrid)
-        return dsstrid
-#        return ""
+        url = self.baseurl+"/Datastreams"
+        print("POST to {0}; Content: {1}".format(url, dsjson))
+        # r = session.post(url, headers=headers, data=dsjson, verify=self.VERIFY_SSL)
+        # dsstr=r.headers["Location"]
+        # dsstrid=dsstr[dsstr.find("(")+1:dsstr.find(")")]
+        # print (dsstr,dsstrid)
+        # return dsstrid
 
-#         except:
-#             return 'Error'
     
     def createdatastreamAQI(self,row):
         session = requests.session()
-        if row['sensortype']!='mq131':
+        if row['sensorname'] not in ('ozone', 'particulate_matter'):
             return ''
 #         try:
             # Get Token
         jwt_token = self.jwt_authenticate()
-        print (jwt_token)
+        # print (jwt_token)
         headers = {'Content-Type': 'application/json','Authorization': "Bearer {token}".format(token=jwt_token[0])}
 
         # Create Datastream
         print ("Creating Datastreams AQI")
         dsjson =json.dumps(self.createDatastream(row['stathingid'],row['dssensorid'],row['AQI_dsobspropertyid'],row['AQI_dsname'],
-                                                 row['AQI_dsdesc'],row['AQI_dsmunit'],row['AQI_dsmsymbol'],
+                                                 row['AQI_dsdesc'],row['AQI_dsmunit'],None,
                                                  row['AQI_dsmdefinition'],row['AQI_dsobstype']), ensure_ascii=False)
-        r = session.post(self.baseurl+"/Datastreams", headers=headers, data=dsjson, verify=self.VERIFY_SSL)
-        dsstr=r.headers["Location"]
-        dsstrid=dsstr[dsstr.find("(")+1:dsstr.find(")")]
-        print (dsstr,dsstrid)
-        return dsstrid
-#        return ""
-
-#         except:
-#             return 'Error'
+        url = self.baseurl+"/Datastreams"
+        print("POST to {0}; Content: {1}".format(url, dsjson))
+        # r = session.post(self.baseurl+"/Datastreams", headers=headers, data=dsjson, verify=self.VERIFY_SSL)
+        # dsstr=r.headers["Location"]
+        # dsstrid=dsstr[dsstr.find("(")+1:dsstr.find(")")]
+        # print (dsstr,dsstrid)
+        # return dsstrid
 
     def do_patch_thing_name_and_desc(self, row):
         session = requests.session()
@@ -333,14 +330,12 @@ class LearnSTAClient:
         dfdatastreams.to_csv(outputdatastreamsfilepath,index=False)
     
     # custom function to add the QAQC, AQI datastreams.
-    def patchdatastreams(self,inputdatastreamsfilepath,outputdatastreamsfilepath,inputthingsfilepath):
-        #dfthings=pd.read_csv(inputthingsfilepath)
-        dfdatastreams=pd.read_csv(inputdatastreamsfilepath,encoding = "cp1252").head(1)   
-        dfdatastreams["AQI_dsmsymbol"]="ppm"
-        #dfdatastreams=dfdatastreams.merge(dfthings,on='devicenum', how='left')
+    def patchdatastreams(self, outputdatastreamsfilepath):
+        dfdatastreams=pd.read_csv(outputdatastreamsfilepath,encoding = "latin1")
+        #set_trace()
         dfdatastreams['QAQC_stadatastreamid'] =dfdatastreams.apply(self.createdatastreamQAQC, axis=1)
         dfdatastreams['AQI_stadatastreamid'] =dfdatastreams.apply(self.createdatastreamAQI, axis=1)
-        dfdatastreams.to_csv(outputdatastreamsfilepath,index=False)   
+        #dfdatastreams.to_csv(outputdatastreamsfilepath,index=False)
     
     def createagentssql(self, inputthingsfilepath, agentsfilepath):
         dfthings=pd.read_csv(inputthingsfilepath)
