@@ -13,19 +13,12 @@ https://github.com/opengeospatial/sensorthings
 
 import requests
 import pandas as pd
-import warnings
 import json
-import time
-import sys
-import json
-import random
-from pandas.io.json import json_normalize
-# import aqi
 import uuid
 from datetime import datetime, timedelta
 
-from IPython.core.debugger import set_trace
-import traceback
+# from IPython.core.debugger import set_trace
+# from pdb import set_trace
 
 DEFAULT_ENCODING = 'windows-1252'
 
@@ -252,7 +245,7 @@ class LearnSTAClient:
 
     def createdatastreamQAQC(self,row):
         session = requests.session()
-        if row['sensorname'] not in ('ozone', 'air_temperature', 'particulate_matter'):
+        if row['sensorname'] not in ('ozone', 'particulate_matter'):
             return ''
         jwt_token = self.jwt_authenticate()
         headers = {'Content-Type': 'application/json','Authorization': "Bearer {token}".format(token=jwt_token[0])}
