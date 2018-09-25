@@ -25,7 +25,7 @@ class OPCN2(ParticulateMatterSensor):
             spi.mode = OPCN2.SPI_MODE
             spi.max_speed_hz = OPCN2.SPI_SPEED_HZ
 
-            alphasense = opc.OPCN2(spi)
+            alphasense = opc.OPCN2(spi, max_cnxn_retries=15)
 
             # Turn the opc ON and wait before reading data
             alphasense.on()
