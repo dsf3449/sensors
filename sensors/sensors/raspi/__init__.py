@@ -21,3 +21,15 @@ def import_adafruit_adc():
         return adafruit_adc
     except ModuleNotFoundError:
         return None
+
+
+def import_spidev():
+    """ Catch ModuleNotFoundError and return None if spidev is
+            not installed (e.g. if we are running the simulator on a
+            non-RPi platform)
+        """
+    try:
+        import spidev
+        return spidev
+    except ModuleNotFoundError:
+        return None

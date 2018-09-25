@@ -1,4 +1,5 @@
-import spidev
+from sensors.raspi import import_spidev
+SPIDEV = import_spidev()
 import opc
 from time import sleep
 
@@ -19,7 +20,7 @@ class OPCN2(ParticulateMatterSensor):
         alphasense = None
         try:
             # Setup SPI device
-            spi = spidev.SpiDev()
+            spi = SPIDEV.SpiDev()
             spi.open(OPCN2.SPI_BUS, OPCN2.SPI_DEVICE)
             spi.mode = OPCN2.SPI_MODE
             spi.max_speed_hz = OPCN2.SPI_SPEED_HZ

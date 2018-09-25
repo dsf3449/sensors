@@ -2,6 +2,7 @@
 # Example LEaRN sensor configuration example for a stationary sensor
 # Note: Don't use tab characters in this file as it blows up the YAML parser.
 
+# Thing name: Small Thing 1
 simulator:
   enabled: true
 logging:
