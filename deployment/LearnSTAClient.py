@@ -347,7 +347,7 @@ class LearnSTAClient:
                 
     def createthingsyml(self,inputthingsfilepath,inputdatastreamsfilepath,ymlfilepath):
         dfthings=pd.read_csv(inputthingsfilepath)
-        dfdatastreams=pd.read_csv(inputdatastreamsfilepath)
+        dfdatastreams=pd.read_csv(inputdatastreamsfilepath, encoding=DEFAULT_ENCODING)
         dfsta=dfdatastreams.merge(dfthings,on='devicenum', how='left')
         devices = list(dfsta['devicenum'].unique())
         for i, devicenum in enumerate(devices):
@@ -356,10 +356,12 @@ class LearnSTAClient:
                 #stathingid=str(dfdevice[dfdevice['devicenum']==devnum].iloc[0]['stathingid'])
                 stathingid=str(dfthings[dfthings['devicenum']==devicenum].iloc[0]['stathingid'])
                 locationid=str(dfthings[dfthings['devicenum']==devicenum].iloc[0]['locationid'])
+                thing_name = str(dfthings[dfthings['devicenum']==devicenum].iloc[0]['thname'])
                 jwt_key=str(dfthings[dfthings['devicenum']==devicenum].iloc[0]['jwt_key'])
                 jwt_id=str(dfthings[dfthings['devicenum']==devicenum].iloc[0]['jwt_id'])
                 stadatastreamslist=list(dfdatastreams[dfdatastreams['devicenum']==devicenum]['stadatastreamid'].unique())
                 stasensortypeslist=list(dfdatastreams[dfdatastreams['devicenum']==devicenum]['sensortype'].unique())
+                cfile.write("# Thing name: {0}\n".format(thing_name))
                 cfile.write("logging:"+'\n')
                 cfile.write("  logger_path: /var/log/sensor.log"+'\n')
                 cfile.write("  level_file: WARNING"+'\n')
