@@ -29,9 +29,14 @@ class OPCN2(ParticulateMatterSensor):
 
             # Turn the opc ON and wait before reading data
             alphasense.on()
-            sleep(1)
+            sleep(10)
 
-            # Read the PM data
+            # Read the PM data, throwing out the first two readings as these seem to always be
+            # zero or a very small number.  Wait between readings just in case that matters.
+            alphasense.pm()
+            sleep(2)
+            alphasense.pm()
+            sleep(2)
             pm = alphasense.pm()
             result = float(pm['PM2.5'])
             parameters = {"pm1": str(pm['PM1']),
