@@ -1,7 +1,6 @@
-from sensors.raspi import import_spidev
-SPIDEV = import_spidev()
-import opc
-from time import sleep
+import subprocess
+import json
+import math
 
 from sensors.domain.sensor import ParticulateMatterSensor
 from sensors.common.constants import *
@@ -16,38 +15,20 @@ class OPCN2(ParticulateMatterSensor):
     SPI_SPEED_HZ = 500000
 
     def _particulates(self):
-        spi = None
-        alphasense = None
+        result = None
+        parameters = None
         try:
-            # Setup SPI device
-            spi = SPIDEV.SpiDev()
-            spi.open(OPCN2.SPI_BUS, OPCN2.SPI_DEVICE)
-            spi.mode = OPCN2.SPI_MODE
-            spi.max_speed_hz = OPCN2.SPI_SPEED_HZ
-
-            alphasense = opc.OPCN2(spi, max_cnxn_retries=15)
-
-            # Turn the opc ON and wait before reading data
-            alphasense.on()
-            sleep(10)
-
-            # Read the PM data, throwing out the first two readings as these seem to always be
-            # zero or a very small number.  Wait between readings just in case that matters.
-            alphasense.pm()
-            sleep(2)
-            alphasense.pm()
-            sleep(2)
-            pm = alphasense.pm()
+            cp = subprocess.run(["sample_opcn2"], stdout=subprocess.PIPE, universal_newlines=True)
+            pm = json.loads(cp.stdout.split('\n')[:-1][0])
             result = float(pm['PM2.5'])
             parameters = {"pm1": str(pm['PM1']),
                           "pm10": str(pm['PM10'])}
+        except:
+            result = math.nan
+            parameters = {"pm1": str(math.nan),
+                          "pm10": str(math.nan)}
 
-            return result, parameters
-        finally:
-            if alphasense is not None:
-                alphasense.off()
-            if spi is not None:
-                spi.close()
+        return result, parameters
 
     def __init__(self, typ, *args, **kwargs):
         super().__init__(typ, *args, **kwargs)
