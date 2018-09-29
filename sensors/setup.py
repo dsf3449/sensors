@@ -115,7 +115,7 @@ setup(
             'sensor_simulator=sensors.simulator.sample:main',
             'calibrate_mq131=sensors.raspi.calibrate_mq131:main',
             'sample_dht=sensors.raspi.sample_temp_humidity:main',
-            'sample_opcn2=sensor.raspi.sample_opcn2:main',
+            'sample_opcn2=sensors.raspi.sample_opcn2:main',
         ],
     },
 )
