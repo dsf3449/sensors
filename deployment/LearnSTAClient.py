@@ -204,6 +204,8 @@ class LearnSTAClient:
             thingjson =json.dumps(self.createThing(row['locationid'],row['thname'],row['thdesc'],row['thnetid'],
                                                    row['thdeploytime']), ensure_ascii=False).encode('utf8')
             r = session.post(self.baseurl+"/Things", headers=headers, data=thingjson, verify=self.VERIFY_SSL)
+            print(r.status_code)
+            print(r.text)
             print (" Printing thing headers ")
             print (r.headers)
             thstr=r.headers["Location"]
@@ -235,6 +237,8 @@ class LearnSTAClient:
                                                      row['dsdesc'],row['dsmunit'], symbol,
                                                      row['dsmdefinition'],row['dsobstype']), ensure_ascii=False).encode('utf8')
             r = session.post(self.baseurl+"/Datastreams", headers=headers, data=dsjson, verify=self.VERIFY_SSL)
+            print(r.status_code)
+            print(r.text)
             dsstr=r.headers["Location"]
             dsstrid=dsstr[dsstr.find("(")+1:dsstr.find(")")]
             print (dsstr,dsstrid)
@@ -264,6 +268,7 @@ class LearnSTAClient:
         print("POST to {0}; Content: {1}".format(url, dsjson))
         r = session.post(url, headers=headers, data=dsjson, verify=self.VERIFY_SSL)
         print(r.status_code)
+        print(r.text)
         dsstr=r.headers["Location"]
         dsstrid=dsstr[dsstr.find("(")+1:dsstr.find(")")]
         print (dsstr,dsstrid)
@@ -281,11 +286,12 @@ class LearnSTAClient:
         print ("Creating Datastreams AQI")
         dsjson =json.dumps(self.createDatastream(row['stathingid'],row['dssensorid'],row['AQI_dsobspropertyid'],row['AQI_dsname'],
                                                  row['AQI_dsdesc'],row['AQI_dsmunit'],None,
-                                                 row['AQI_dsmdefinition'],row['AQI_dsobstype']), ensure_ascii=False)
+                                                 row['AQI_dsmdefinition'],row['AQI_dsobstype']), ensure_ascii=False).encode('utf8')
         url = self.baseurl+"/Datastreams"
         print("POST to {0}; Content: {1}".format(url, dsjson))
-        r = session.post(self.baseurl+"/Datastreams", headers=headers, data=dsjson, verify=self.VERIFY_SSL)
+        r = session.post(url, headers=headers, data=dsjson, verify=self.VERIFY_SSL)
         print(r.status_code)
+        print(r.text)
         dsstr=r.headers["Location"]
         dsstrid=dsstr[dsstr.find("(")+1:dsstr.find(")")]
         print (dsstr,dsstrid)
