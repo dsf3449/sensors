@@ -156,6 +156,33 @@ class LearnSTAClient:
         print (stadatastream)
         return stadatastream
 
+    def create_unit_of_measurement(self, meas_unit, meas_symbol, meas_def):
+        unit_of_meas = {}
+        unit_of_meas["name"] = meas_unit
+        unit_of_meas["symbol"] = meas_symbol
+        unit_of_meas["definition"] = meas_def
+        return unit_of_meas
+
+    def create_multi_datastream(self, thing_id, sensor_id, obs_prop_ids,
+                                name, description, obs_data_types,
+                                units_of_meas):
+        thing = {}
+        thing["@iot.id"] = thing_id.replace("'", "")
+        sensor = {}
+        sensor["@iot.id"] = sensor_id.replace("'", "")
+
+        multi_ds = {}
+        multi_ds["Thing"] = thing
+        multi_ds["Sensor"] = sensor
+        multi_ds["ObservedProperties"] = obs_prop_ids
+        multi_ds["name"] = name
+        multi_ds["description"] = description
+        multi_ds["observationType"] = 'http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_ComplexObservation'
+        multi_ds["multiObservationDataTypes"] = obs_data_types
+        multi_ds["unitOfMeasurements"] = units_of_meas
+        print(multi_ds)
+        return multi_ds
+
     def createsensor(self,name,description,encodingtype,metadata):
         session = requests.session()
         sensor={}
@@ -242,6 +269,38 @@ class LearnSTAClient:
             dsstr=r.headers["Location"]
             dsstrid=dsstr[dsstr.find("(")+1:dsstr.find(")")]
             print (dsstr,dsstrid)
+            return dsstrid
+
+        except:
+            return 'Error'
+
+    def create_multidatastreams(self, row, df_multidatastreams_datastreams):
+        # TODO: Update to actually create multidatastreams instead of datastreams
+        session = requests.session()
+        try:
+            # Get Token
+            jwt_token = self.jwt_authenticate()
+            print(jwt_token)
+            headers = {'Content-Type': 'application/json; charset=utf-8',
+                       'Authorization': "Bearer {token}".format(token=jwt_token[0])}
+
+            # Create Datastream
+            print("Creating Datastreams")
+            symbol = row['dsmsymbol']
+            if row['dsmunit'] == 'degree Celsius':
+                # Hack to get around Pandas's seeming inability to properly decode the degree symbol from a windows-1252-
+                # encoded file
+                symbol = '\u00B0C'
+            dsjson = json.dumps(
+                self.createDatastream(row['stathingid'], row['dssensorid'], row['dsobspropertyid'], row['dsname'],
+                                      row['dsdesc'], row['dsmunit'], symbol,
+                                      row['dsmdefinition'], row['dsobstype']), ensure_ascii=False).encode('utf8')
+            r = session.post(self.baseurl + "/Datastreams", headers=headers, data=dsjson, verify=self.VERIFY_SSL)
+            print(r.status_code)
+            print(r.text)
+            dsstr = r.headers["Location"]
+            dsstrid = dsstr[dsstr.find("(") + 1:dsstr.find(")")]
+            print(dsstr, dsstrid)
             return dsstrid
 
         except:
@@ -334,7 +393,17 @@ class LearnSTAClient:
         dfdatastreams['QAQC_stadatastreamid'] = dfdatastreams.apply(self.createdatastreamQAQC, axis=1)
         dfdatastreams['AQI_stadatastreamid'] = dfdatastreams.apply(self.createdatastreamAQI, axis=1)
         dfdatastreams.to_csv(outputdatastreamsfilepath, index=False, encoding=DEFAULT_ENCODING)
-    
+
+    def create_multidatastreams(self, input_mds_datastreams_filepath, input_mds_filepath, output_mds_filepath,
+                                input_things_filepath):
+        df_things = pd.read_csv(input_things_filepath, encoding=DEFAULT_ENCODING)
+        df_multidatastreams = pd.read_csv(input_mds_filepath, encoding=DEFAULT_ENCODING)
+        df_multidatastreams_datastreams = pd.read_csv(input_mds_datastreams_filepath)
+        df_multidatastreams = df_multidatastreams.merge(df_things, on='devicenum', how='left')
+        df_multidatastreams['stamultidatastreamid'] = df_multidatastreams.apply(self.create_multidatastreams, axis=1,
+                                                                                args=(df_multidatastreams_datastreams,))
+        df_multidatastreams.to_csv(output_mds_filepath, index=False, encoding=DEFAULT_ENCODING)
+
     # custom function to add the QAQC, AQI datastreams.
     def patchdatastreams(self, outputdatastreamsfilepath):
         dfdatastreams=pd.read_csv(outputdatastreamsfilepath, encoding=DEFAULT_ENCODING)
