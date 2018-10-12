@@ -10,12 +10,14 @@ This is a client library for communicating with a sensorthings api compliant ser
 https://github.com/opengeospatial/sensorthings
 
 """
-
-import requests
-import pandas as pd
 import json
 import uuid
 from datetime import datetime, timedelta
+import re
+
+import requests
+import pandas as pd
+
 
 # from IPython.core.debugger import set_trace
 # from pdb import set_trace
@@ -160,11 +162,16 @@ class LearnSTAClient:
         unit_of_meas = {}
         unit_of_meas["name"] = meas_unit
         unit_of_meas["symbol"] = meas_symbol
+        if meas_unit == 'degree Celsius':
+            # Hack to get around Pandas's seeming inability to properly decode the degree symbol from a windows-1252-
+            # encoded file
+            unit_of_meas["symbol"] = '\u00B0C'
         unit_of_meas["definition"] = meas_def
         return unit_of_meas
 
     def create_multi_datastream(self, thing_id, sensor_id, obs_prop_ids,
-                                name, description, obs_data_types,
+                                name, description,
+                                obs_data_types,
                                 units_of_meas):
         thing = {}
         thing["@iot.id"] = thing_id.replace("'", "")
@@ -174,13 +181,20 @@ class LearnSTAClient:
         multi_ds = {}
         multi_ds["Thing"] = thing
         multi_ds["Sensor"] = sensor
-        multi_ds["ObservedProperties"] = obs_prop_ids
+        # Put the references to ObservedProprties into a dict with keys of the form
+        # 'iot.idN', where N is an integer from 0 to N.  These keys will later be replaced
+        # by '@iot.id' in the serialized JSON (i.e. once they are not longer Python objects)
+        # to be compliant with SensorThings.
+        op = []
+        for i, o in enumerate(obs_prop_ids):
+            op.append({"iot.id{0}".format(i): o})
+        multi_ds["ObservedProperties"] = op
         multi_ds["name"] = name
         multi_ds["description"] = description
         multi_ds["observationType"] = 'http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_ComplexObservation'
         multi_ds["multiObservationDataTypes"] = obs_data_types
         multi_ds["unitOfMeasurements"] = units_of_meas
-        print(multi_ds)
+        # print(multi_ds)
         return multi_ds
 
     def createsensor(self,name,description,encodingtype,metadata):
@@ -274,7 +288,7 @@ class LearnSTAClient:
         except:
             return 'Error'
 
-    def create_multidatastreams(self, row, df_multidatastreams_datastreams):
+    def do_create_multidatastream(self, row, df_multidatastreams_datastreams):
         # TODO: Update to actually create multidatastreams instead of datastreams
         session = requests.session()
         try:
@@ -284,24 +298,35 @@ class LearnSTAClient:
             headers = {'Content-Type': 'application/json; charset=utf-8',
                        'Authorization': "Bearer {token}".format(token=jwt_token[0])}
 
-            # Create Datastream
-            print("Creating Datastreams")
-            symbol = row['dsmsymbol']
-            if row['dsmunit'] == 'degree Celsius':
-                # Hack to get around Pandas's seeming inability to properly decode the degree symbol from a windows-1252-
-                # encoded file
-                symbol = '\u00B0C'
-            dsjson = json.dumps(
-                self.createDatastream(row['stathingid'], row['dssensorid'], row['dsobspropertyid'], row['dsname'],
-                                      row['dsdesc'], row['dsmunit'], symbol,
-                                      row['dsmdefinition'], row['dsobstype']), ensure_ascii=False).encode('utf8')
-            r = session.post(self.baseurl + "/Datastreams", headers=headers, data=dsjson, verify=self.VERIFY_SSL)
+            obs_props = []
+            obs_data_types = []
+            units_of_meas = []
+            # Select component Datastreams
+            comp = df_multidatastreams_datastreams[df_multidatastreams_datastreams['multidatastreamnum'] == row['multidatastreamnum']]
+            for idx, c in comp.iterrows():
+                # Collect ObservedProperty ID
+                obs_props.append(c['dsobspropertyid'])
+                # Collect ObservationType
+                obs_data_types.append(c['dsobstype'])
+                # Create unit of measurement
+                units_of_meas.append(self.create_unit_of_measurement(c['dsmunit'], c['dsmsymbol'], c['dsmdefinition']))
+
+            # Create MultiDatastream
+            mdsjson = json.dumps(
+                self.create_multi_datastream(row['stathingid'], row['mdssensorid'], obs_props,
+                                             row['mdsname'], row['mdsdesc'],
+                                             obs_data_types, units_of_meas), ensure_ascii=False)
+            # Replace 'iot.idN' with '@iot.id'
+            mdsjson = re.sub("iot\.id\d", "@iot.id", mdsjson).encode('utf8')
+            url = self.baseurl + "/MultiDatastreams"
+            print("POST: {0}: {1}".format(url, mdsjson))
+            r = session.post(url, headers=headers, data=mdsjson, verify=self.VERIFY_SSL)
             print(r.status_code)
             print(r.text)
-            dsstr = r.headers["Location"]
-            dsstrid = dsstr[dsstr.find("(") + 1:dsstr.find(")")]
-            print(dsstr, dsstrid)
-            return dsstrid
+            mdsstr = r.headers["Location"]
+            mdsstrid = mdsstr[mdsstr.find("(") + 1:mdsstr.find(")")]
+            print(mdsstr, mdsstrid)
+            return mdsstrid
 
         except:
             return 'Error'
@@ -394,13 +419,14 @@ class LearnSTAClient:
         dfdatastreams['AQI_stadatastreamid'] = dfdatastreams.apply(self.createdatastreamAQI, axis=1)
         dfdatastreams.to_csv(outputdatastreamsfilepath, index=False, encoding=DEFAULT_ENCODING)
 
-    def create_multidatastreams(self, input_mds_datastreams_filepath, input_mds_filepath, output_mds_filepath,
+    def create_multidatastreams(self, input_mds_filepath, output_mds_filepath,
+                                input_mds_datastreams_filepath,
                                 input_things_filepath):
         df_things = pd.read_csv(input_things_filepath, encoding=DEFAULT_ENCODING)
         df_multidatastreams = pd.read_csv(input_mds_filepath, encoding=DEFAULT_ENCODING)
-        df_multidatastreams_datastreams = pd.read_csv(input_mds_datastreams_filepath)
+        df_multidatastreams_datastreams = pd.read_csv(input_mds_datastreams_filepath, encoding=DEFAULT_ENCODING)
         df_multidatastreams = df_multidatastreams.merge(df_things, on='devicenum', how='left')
-        df_multidatastreams['stamultidatastreamid'] = df_multidatastreams.apply(self.create_multidatastreams, axis=1,
+        df_multidatastreams['stamultidatastreamid'] = df_multidatastreams.apply(self.do_create_multidatastream, axis=1,
                                                                                 args=(df_multidatastreams_datastreams,))
         df_multidatastreams.to_csv(output_mds_filepath, index=False, encoding=DEFAULT_ENCODING)
 
