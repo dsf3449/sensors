@@ -440,7 +440,7 @@ class LearnSTAClient:
                 cfile.write("insert into agents(id, key) values ('{jwt_id}', '{jwt_key}');\n".format(jwt_id=row['jwt_id'],
                                                                                                      jwt_key=row['jwt_key']))
                 
-    def createthingsyml(self,inputthingsfilepath,inputdatastreamsfilepath,ymlfilepath):
+    def createthingsyml_orig(self,inputthingsfilepath,inputdatastreamsfilepath,ymlfilepath):
         dfthings=pd.read_csv(inputthingsfilepath)
         dfdatastreams=pd.read_csv(inputdatastreamsfilepath, encoding=DEFAULT_ENCODING)
         dfsta=dfdatastreams.merge(dfthings,on='devicenum', how='left')
@@ -482,6 +482,81 @@ class LearnSTAClient:
                         cfile.write("    properties:\n")
                         cfile.write("      - Ro: 2.501\n")
                         cfile.write("      - adc: ads1015\n")
+                cfile.write("transports:"+'\n')
+                cfile.write("  - type: https"+'\n')
+                cfile.write("    properties:"+'\n')
+                cfile.write("      auth_url: https://test1-sta-api.learnlafayette.com/SensorThingsService/auth/login"+'\n')
+                cfile.write("      url: https://test1-sta-api.learnlafayette.com/SensorThingsService/v1.0/"+'\n')
+                cfile.write("      jwt_id: "+jwt_id+'\n')
+                cfile.write("      jwt_key: "+jwt_key+'\n')
+                cfile.write("      jwt_token_ttl_minutes: 15"+'\n')
+                cfile.write("      transmit_interval_seconds: 15"+'\n')
+                cfile.write("      verify_ssl: true"+'\n')
+
+
+    def createthings_yml(self, input_things_filepath, input_datastreams_filepath,
+                         input_mds_filepath, input_msd_datastreams_filepath,
+                         yml_filepath):
+        dfthings = pd.read_csv(input_things_filepath, encoding=DEFAULT_ENCODING)
+        dfdatastreams = pd.read_csv(input_datastreams_filepath, encoding=DEFAULT_ENCODING)
+        df_ds = dfdatastreams.merge(dfthings,on='devicenum', how='left')
+
+        dfmultidatastreams = pd.read_csv(input_mds_filepath, encoding=DEFAULT_ENCODING)
+        dfmultidatastreams_datastreams = pd.read_csv(input_msd_datastreams_filepath, encoding=DEFAULT_ENCODING)
+        df_mds = dfmultidatastreams_datastreams.merge(dfmultidatastreams, on=['devicenum', 'multidatastreamnum'], how='left')
+
+        devices = list(df_ds['devicenum'].unique())
+        for i, devicenum in enumerate(devices):
+            filepath = yml_filepath+"/"+str(devicenum)+".yml"
+            with open(filepath, 'w') as cfile:
+                stathingid=str(dfthings[dfthings['devicenum']==devicenum].iloc[0]['stathingid'])
+                locationid=str(dfthings[dfthings['devicenum']==devicenum].iloc[0]['locationid'])
+                thing_name = str(dfthings[dfthings['devicenum']==devicenum].iloc[0]['thname'])
+                jwt_key=str(dfthings[dfthings['devicenum']==devicenum].iloc[0]['jwt_key'])
+                jwt_id=str(dfthings[dfthings['devicenum']==devicenum].iloc[0]['jwt_id'])
+                stasensortypeslist=list(dfdatastreams[dfdatastreams['devicenum']==devicenum]['sensortype'].unique())
+                cfile.write("# Thing name: {0}\n".format(thing_name))
+                cfile.write("logging:"+'\n')
+                cfile.write("  logger_path: /var/log/sensor.log"+'\n')
+                cfile.write("  level_file: WARNING"+'\n')
+                cfile.write("  level_console: WARNING"+'\n')
+                cfile.write("spooler:"+'\n')
+                cfile.write("  db_path: /var/spool/sensor.sqlite"+'\n')
+                cfile.write("thing:"+'\n')
+                cfile.write("  id: "+stathingid.replace("'", "")+'\n')
+                cfile.write("  location_id: "+locationid.replace("'", "")+'\n')
+                cfile.write("sensors:"+'\n')
+                # Handle regular Datastreams
+                for stype in stasensortypeslist:
+                    stasensorlist=list(dfdatastreams[(dfdatastreams['devicenum']==devicenum) & (dfdatastreams['sensortype']==stype)]['sensorname'].unique())
+                    cfile.write("  - type: "+stype+'\n')
+                    cfile.write("    observed_properties:"+'\n')
+                    for sname in stasensorlist:
+                     # loop through observed properties
+                        cfile.write("      - name: "+sname+'\n')
+                        stadsid=list(dfdatastreams[(dfdatastreams['devicenum']==devicenum) & (dfdatastreams['sensortype']==stype) & (dfdatastreams['sensorname']==sname)]['stadatastreamid'].unique())
+                        cfile.write("        datastream_id: "+stadsid[0].replace("'", "")+'\n')
+                    if stype == 'mq131':
+                        cfile.write("    properties:\n")
+                        cfile.write("      - Ro: 2.501\n")
+                        if dfthings['large_thing'].iloc[i]:
+                            # Configure non-default ADC for large sensor boxes
+                            cfile.write("      - adc: ads1015\n")
+
+                # Handle MultiDatastreams
+                mds = df_mds[df_mds['devicenum'] == devicenum]
+                mds_num_list = list(mds['multidatastreamnum'].unique())
+                for m_num in mds_num_list:
+                    m = mds[mds['multidatastreamnum'] == m_num]
+                    cfile.write("  - type: " + str(m['sensortype'].iloc[0]) + '\n')
+                    mds_id = m['stamultidatastreamid'].unique()[0].strip("'")
+                    cfile.write("    datastream_id: " + mds_id + '\n')
+                    cfile.write("    observed_properties:" + '\n')
+                    # import pdb;
+                    # pdb.set_trace()
+                    for o in m['dsobsproperty'].unique():
+                        cfile.write("      - " + o + "\n");
+
                 cfile.write("transports:"+'\n')
                 cfile.write("  - type: https"+'\n')
                 cfile.write("    properties:"+'\n')
