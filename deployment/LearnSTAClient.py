@@ -181,13 +181,9 @@ class LearnSTAClient:
         multi_ds = {}
         multi_ds["Thing"] = thing
         multi_ds["Sensor"] = sensor
-        # Put the references to ObservedProprties into a dict with keys of the form
-        # 'iot.idN', where N is an integer from 0 to N.  These keys will later be replaced
-        # by '@iot.id' in the serialized JSON (i.e. once they are not longer Python objects)
-        # to be compliant with SensorThings.
         op = []
-        for i, o in enumerate(obs_prop_ids):
-            op.append({"iot.id{0}".format(i): o})
+        for o in obs_prop_ids:
+            op.append({"@iot.id": o})
         multi_ds["ObservedProperties"] = op
         multi_ds["name"] = name
         multi_ds["description"] = description
@@ -315,9 +311,7 @@ class LearnSTAClient:
             mdsjson = json.dumps(
                 self.create_multi_datastream(row['stathingid'], row['mdssensorid'], obs_props,
                                              row['mdsname'], row['mdsdesc'],
-                                             obs_data_types, units_of_meas), ensure_ascii=False)
-            # Replace 'iot.idN' with '@iot.id'
-            mdsjson = re.sub("iot\.id\d", "@iot.id", mdsjson).encode('utf8')
+                                             obs_data_types, units_of_meas), ensure_ascii=False).encode('utf8')
             url = self.baseurl + "/MultiDatastreams"
             print("POST: {0}: {1}".format(url, mdsjson))
             r = session.post(url, headers=headers, data=mdsjson, verify=self.VERIFY_SSL)
