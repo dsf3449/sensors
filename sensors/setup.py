@@ -19,7 +19,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.4.3',
+    version='0.4.4',
 
     description='LEaRN Data Logger',
     long_description=long_description,
@@ -114,7 +114,8 @@ setup(
             'sensor_transmit=sensors.network.transmit:main',
             'sensor_simulator=sensors.simulator.sample:main',
             'calibrate_mq131=sensors.raspi.calibrate_mq131:main',
-            'sample_dht=sensors.raspi.sample_temp_humidity:main'
+            'sample_dht=sensors.raspi.sample_temp_humidity:main',
+            'sample_opcn2=sensors.raspi.sample_opcn2:main',
         ],
     },
 )

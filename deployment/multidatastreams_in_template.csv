@@ -1,0 +1,2 @@
+devicenum,multidatastreamnum,stamultidatastreamid,mdssensorid,mdsname,mdsdesc,sensortype
+1,1,,01bd2246-168d-11e8-b2ce-c76f5086fe6c,"Test Thing 42 (Air temperature, RH)",Air temperature and relative humidity (DHT11),dht11
