@@ -18,6 +18,59 @@ class Config:
             self.config = self.get_configuration()
 
         @classmethod
+        def read_sensor_configuration(cls, yaml_path, simulator_enabled, ds_id_present, sensor):
+            if simulator_enabled:
+                from sensors.domain import get_sensor_instance_simulator as get_sensor_instance
+            else:
+                from sensors.domain import get_sensor_instance
+
+            # Look for datastream_id at the top level of the sensor definition.  If one exists
+            #   this is a MultiDatastream.  If one does not exist, this is a Datastream
+            is_multi_datastream = True
+            try:
+                get_config_element(CFG_DATASTREAM_ID, sensor, CFG_SENSOR)
+            except ConfigurationError:
+                is_multi_datastream = False
+
+            if is_multi_datastream:
+                return cls._read_sensor_configuration_multidatastream(yaml_path, ds_id_present, sensor, get_sensor_instance)
+            else:
+                return cls._read_sensor_configuration_datastream(yaml_path, ds_id_present, sensor, get_sensor_instance)
+
+        @classmethod
+        def _read_sensor_configuration_multidatastream(cls, yaml_path, ds_id_present, sensor, get_sensor_instance):
+            return None
+
+        @classmethod
+        def _read_sensor_configuration_datastream(cls, yaml_path, ds_id_present, sensor, get_sensor_instance):
+            sensor_type = get_config_element(CFG_TYPE, sensor, CFG_SENSOR)
+            observed_properties = get_config_element(CFG_OBSERVED_PROPERTIES, sensor, CFG_SENSOR)
+            if len(observed_properties) < 1:
+                raise_config_error("No observed properties defined in sensor {0} in YAML {1}".
+                                   format(str(sensor), yaml_path))
+            op_objects = []
+            for op in observed_properties:
+                op_name = get_config_element(CFG_NAME, op, CFG_OBSERVED_PROPERTY)
+                op_ds_id = get_config_element(CFG_DATASTREAM_ID, op, CFG_OBSERVED_PROPERTY)
+                # Make sure this datastream_id hasn't already been encountered
+                if op_ds_id in ds_id_present:
+                    raise_config_error("Datastream with ID {0} is specified more than once in YAML {1}".
+                                       format(op_ds_id, yaml_path))
+                else:
+                    ds_id_present.add(op_ds_id)
+                op_objects.append(ObservedProperty(op_name, op_ds_id))
+            if len(op_objects) < 1:
+                raise_config_error("No valid observed properties defined in sensor {0} in YAML {1}".
+                                   format(str(sensor), yaml_path))
+
+            properties_list = get_config_element(CFG_PROPERTIES, sensor, CFG_SENSOR, optional=True)
+            properties = {}
+            if properties_list is not None:
+                properties = ChainMap(*properties_list)
+
+            return get_sensor_instance(sensor_type, *op_objects, **properties)
+
+        @classmethod
         def get_configuration(cls):
             """
 
@@ -116,36 +169,7 @@ class Config:
             # Sensors
             sensor_objects = []
             for s in sensors:
-                sensor_type = get_config_element(CFG_TYPE, s, CFG_SENSOR)
-                observed_properties = get_config_element(CFG_OBSERVED_PROPERTIES, s, CFG_SENSOR)
-                if len(observed_properties) < 1:
-                    raise_config_error("No observed properties defined in sensor {0} in YAML {1}".
-                                       format(str(s), yaml_path))
-                op_objects = []
-                for op in observed_properties:
-                    op_name = get_config_element(CFG_NAME, op, CFG_OBSERVED_PROPERTY)
-                    op_ds_id = get_config_element(CFG_DATASTREAM_ID, op, CFG_OBSERVED_PROPERTY)
-                    # Make sure this datastream_id hasn't already been encountered
-                    if op_ds_id in ds_id_present:
-                        raise_config_error("Datastream with ID {0} is specified more than once in YAML {1}".
-                                           format(op_ds_id, yaml_path))
-                    else:
-                        ds_id_present.add(op_ds_id)
-                    op_objects.append(ObservedProperty(op_name, op_ds_id))
-                if len(op_objects) < 1:
-                    raise_config_error("No valid observed properties defined in sensor {0} in YAML {1}".
-                                       format(str(s), yaml_path))
-                if simulator_enabled:
-                    from sensors.domain import get_sensor_instance_simulator as get_sensor_instance
-                else:
-                    from sensors.domain import get_sensor_instance
-
-                properties_list = get_config_element(CFG_PROPERTIES, s, CFG_SENSOR, optional=True)
-                properties = {}
-                if properties_list is not None:
-                    properties = ChainMap(*properties_list)
-
-                sensor_objects.append(get_sensor_instance(sensor_type, *op_objects, **properties))
+                sensor_objects.append(cls.read_sensor_configuration(yaml_path, simulator_enabled, ds_id_present, s))
 
             if len(sensor_objects) < 1:
                 raise_config_error("No valid sensors defined in YAML {0}".format(yaml_path))
