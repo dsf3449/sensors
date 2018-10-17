@@ -18,6 +18,7 @@ CFG_PROPERTIES = 'properties'
 CFG_LOCATION_ID = 'location_id'
 CFG_FOI_ID = 'feature_of_interest_id'
 CFG_DATASTREAM_ID = 'datastream_id'
+CFG_MULTIDATASTREAM_ID = 'multidatastream_id'
 CFG_URL = 'url'
 CFG_ENABLED = 'enabled'
 

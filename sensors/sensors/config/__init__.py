@@ -28,7 +28,7 @@ class Config:
             #   this is a MultiDatastream.  If one does not exist, this is a Datastream
             is_multi_datastream = True
             try:
-                get_config_element(CFG_DATASTREAM_ID, sensor, CFG_SENSOR)
+                get_config_element(CFG_MULTIDATASTREAM_ID, sensor, CFG_SENSOR)
             except ConfigurationError:
                 is_multi_datastream = False
 
@@ -39,6 +39,8 @@ class Config:
 
         @classmethod
         def _read_sensor_configuration_multidatastream(cls, yaml_path, ds_id_present, sensor, get_sensor_instance):
+            sensor_type = get_config_element(CFG_TYPE, sensor, CFG_SENSOR)
+
             return None
 
         @classmethod

@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 from sensors.common.constants import *
 from sensors.domain.observation import Observation
+from sensors.domain.multiobservation import MultiObservation
 
 
 class Sensor:
@@ -22,7 +23,6 @@ class Sensor:
         :param generate_phenomenon_time: A function that when called yields the phenomenon time as an
         ISO-formatted string to apply a given observation.  If phenomenon_time is not set,
         generate_phenomenon_time() will be used.
-        :param datastream_id:
         :param feature_of_interest_id:
         :return: A List[Observation] of Observations created
         """
@@ -50,6 +50,57 @@ class Sensor:
         return o
 
 
+class MultiSensor:
+    def __init(self, typ, multidatastream_id, *args, **kwargs):
+        self.typ = typ
+        self.multidatastream_id = multidatastream_id
+        self.observed_property_names = list(args)
+        self.properties = dict(kwargs)
+
+    def _read_results(self):
+        """ Read results from sensor
+
+            :return: Tuple whose first element is:
+                Dict of the form: Keys: observed property name (string), Value: Array of values.
+            And second element:
+                Dict of parameters
+        """
+        raise NotImplementedError
+
+    def generate_observations(self,
+                              phenomenon_time=None,
+                              generate_phenomenon_time=lambda: datetime.now(timezone.utc).isoformat(),
+                              feature_of_interest_id=None):
+        """Generate observations for a given phenomenon time for all observed properties
+           registered with a sensor.
+        :param phenomenon_time: A string representing the phenomenon time (in ISO-format) to apply to
+        all observations
+        :param generate_phenomenon_time: A function that when called yields the phenomenon time as an
+        ISO-formatted string to apply a given observation.  If phenomenon_time is not set,
+        generate_phenomenon_time() will be used.
+        :param feature_of_interest_id:
+        :return: MultiObservation created
+        """
+        t = phenomenon_time
+        if t is None:
+            t = generate_phenomenon_time()
+        (results_dict, parameters) = self._read_results()
+        # Report results in the order expected by the MultiDatastream
+        results = [results_dict[opn] for opn in self.observed_property_names]
+        return self._make_multiobservation(feature_of_interest_id, self.multidatastream_id, t, results, **parameters)
+
+    @staticmethod
+    def _make_multiobservation(feature_of_interest_id, multidatastream_id, phenomenon_time,
+                               results, **parameters):
+        o = MultiObservation()
+        o.featureOfInterestId = feature_of_interest_id
+        o.multidatastreamId = multidatastream_id
+        o.phenomenonTime = phenomenon_time
+        o.results = results
+        o.set_parameters(**parameters)
+
+        return o
+
 class OzoneSensor(Sensor):
     VALID_OBSERVED_PROPERTIES = {CFG_OBSERVED_PROPERTY_OZONE}
 
@@ -72,34 +123,34 @@ class OzoneSensor(Sensor):
         self.obs_func_tab[op.name] = self._ozone
 
 
-class AirTempRHSensor(Sensor):
+class AirTempRHSensor(MultiSensor):
 
     VALID_OBSERVED_PROPERTIES = {CFG_OBSERVED_PROPERTY_AIR_TEMP,
                                  CFG_OBSERVED_PROPERTY_RH}
     RESULT_TTL = timedelta(milliseconds=1000)
 
-    def _read(self):
+    def _read_results(self):
         raise NotImplementedError
 
-    def _sample(self):
-        if self.previous_result:
-            now = datetime.now(timezone.utc)
-            if self.previous_result.timestamp + AirTempRHSensor.RESULT_TTL > now:
-                return self.previous_result
-
-        result = self._read()
-        self.previous_result = result
-        return result
-
-    def _air_temperature(self):
-        result = self._sample()
-        parameters = {"RH": result.humidity}
-        return result.temperature, parameters
-
-    def _relative_humidity(self):
-        result = self._sample()
-        parameters = {"T_air": result.temperature}
-        return result.humidity, parameters
+    # def _sample(self):
+    #     if self.previous_result:
+    #         now = datetime.now(timezone.utc)
+    #         if self.previous_result.timestamp + AirTempRHSensor.RESULT_TTL > now:
+    #             return self.previous_result
+    #
+    #     result = self._read()
+    #     self.previous_result = result
+    #     return result
+    #
+    # def _air_temperature(self):
+    #     result = self._sample()
+    #     parameters = {"RH": result.humidity}
+    #     return result.temperature, parameters
+    #
+    # def _relative_humidity(self):
+    #     result = self._sample()
+    #     parameters = {"T_air": result.temperature}
+    #     return result.humidity, parameters
 
     def __init__(self, typ, *args, **kwargs):
         super().__init__(typ, *args, **kwargs)
@@ -116,12 +167,15 @@ class AirTempRHSensor(Sensor):
                 raise ValueError("Sensor {0} has duplicate definition of observed property {1}".\
                                  format(self.NAME, args[0].name))
 
-        # Register with observation generation function lookup table
-        for op in self.VALID_OBSERVED_PROPERTIES:
-            if op == CFG_OBSERVED_PROPERTY_AIR_TEMP:
-                self.obs_func_tab[CFG_OBSERVED_PROPERTY_AIR_TEMP] = self._air_temperature
-            elif op == CFG_OBSERVED_PROPERTY_RH:
-                self.obs_func_tab[CFG_OBSERVED_PROPERTY_RH] = self._relative_humidity
+        # # Register with observation generation function lookup table
+        # for op in self.VALID_OBSERVED_PROPERTIES:
+        #     if op == CFG_OBSERVED_PROPERTY_AIR_TEMP:
+        #         self.obs_func_tab[CFG_OBSERVED_PROPERTY_AIR_TEMP] = self._air_temperature
+        #     elif op == CFG_OBSERVED_PROPERTY_RH:
+        #         self.obs_func_tab[CFG_OBSERVED_PROPERTY_RH] = self._relative_humidity
+        for a in args:
+            if a not in self.VALID_OBSERVED_PROPERTIES:
+                raise ValueError("Observed property {0} is invalid.  Valid options are {1}".format(a, self.VALID_OBSERVED_PROPERTIES))
 
     class AirTempRHResult:
         def __init__(self, temperature, humidity):

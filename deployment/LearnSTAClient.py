@@ -550,7 +550,7 @@ class LearnSTAClient:
                     m = mds[mds['multidatastreamnum'] == m_num]
                     cfile.write("  - type: " + str(m['sensortype'].iloc[0]) + '\n')
                     mds_id = m['stamultidatastreamid'].unique()[0].strip("'")
-                    cfile.write("    datastream_id: " + mds_id + '\n')
+                    cfile.write("    multidatastream_id: " + mds_id + '\n')
                     cfile.write("    observed_properties:" + '\n')
                     # import pdb;
                     # pdb.set_trace()

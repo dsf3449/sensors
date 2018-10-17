@@ -43,6 +43,8 @@ class TestSqliteRepository(unittest.TestCase):
         o2.set_parameters(**parameters)
         repo.create_observation(o2)
 
+        # TODO: Test MultiObservation
+
         obs = repo.get_observations()
         self.assertEqual(2, len(obs))
         self.assertTrue(o1, obs[0])

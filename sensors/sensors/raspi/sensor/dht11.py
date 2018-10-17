@@ -49,6 +49,15 @@ class Dht11(AirTempRHSensor):
     STATE_DATA_PULL_DOWN = 5
     MAX_SAMPLE_ITR = 6
 
+    def _read_results(self):
+        dht11_result = self._read()
+        parameters = None
+        if not dht11_result.is_valid():
+            parameters = {'error_code': dht11_result.get_error_text()}
+        results = {CFG_OBSERVED_PROPERTY_AIR_TEMP: dht11_result.temperature,
+                   CFG_OBSERVED_PROPERTY_RH: dht11_result.humidity}
+        return results, parameters
+
     def _read(self):
         # Initialize GPIO
         pin = self.GPIO_PIN
@@ -248,3 +257,11 @@ class Dht11(AirTempRHSensor):
 
         def is_valid(self):
             return self.error_code == self.ERR_NO_ERROR
+
+        def get_error_text(self):
+            if self.error_code == self.ERR_NO_ERROR:
+                return "NO ERROR"
+            if self.error_code == self.ERR_MISSING_DATA:
+                return "MISSING DATA"
+            elif self.error_code == self.ERR_CRC:
+                return "CRC ERROR"
