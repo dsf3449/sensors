@@ -133,26 +133,6 @@ class AirTempRHSensor(MultiSensor):
     def _read_results(self):
         raise NotImplementedError
 
-    # def _sample(self):
-    #     if self.previous_result:
-    #         now = datetime.now(timezone.utc)
-    #         if self.previous_result.timestamp + AirTempRHSensor.RESULT_TTL > now:
-    #             return self.previous_result
-    #
-    #     result = self._read()
-    #     self.previous_result = result
-    #     return result
-    #
-    # def _air_temperature(self):
-    #     result = self._sample()
-    #     parameters = {"RH": result.humidity}
-    #     return result.temperature, parameters
-    #
-    # def _relative_humidity(self):
-    #     result = self._sample()
-    #     parameters = {"T_air": result.temperature}
-    #     return result.humidity, parameters
-
     def __init__(self, typ, *args, **kwargs):
         super().__init__(typ, *args, **kwargs)
 
@@ -168,12 +148,6 @@ class AirTempRHSensor(MultiSensor):
                 raise ValueError("Sensor {0} has duplicate definition of observed property {1}".\
                                  format(self.NAME, self.observed_property_names[0].name))
 
-        # # Register with observation generation function lookup table
-        # for op in self.VALID_OBSERVED_PROPERTIES:
-        #     if op == CFG_OBSERVED_PROPERTY_AIR_TEMP:
-        #         self.obs_func_tab[CFG_OBSERVED_PROPERTY_AIR_TEMP] = self._air_temperature
-        #     elif op == CFG_OBSERVED_PROPERTY_RH:
-        #         self.obs_func_tab[CFG_OBSERVED_PROPERTY_RH] = self._relative_humidity
         for opn in self.observed_property_names:
             if opn not in self.VALID_OBSERVED_PROPERTIES:
                 raise ValueError("Observed property {0} is invalid.  Valid options are {1}".format(opn,
