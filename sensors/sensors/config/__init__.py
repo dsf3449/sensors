@@ -41,7 +41,21 @@ class Config:
         def _read_sensor_configuration_multidatastream(cls, yaml_path, ds_id_present, sensor, get_sensor_instance):
             sensor_type = get_config_element(CFG_TYPE, sensor, CFG_SENSOR)
 
-            return None
+            # Read multidatastream_id
+            multidatastream_id = get_config_element(CFG_MULTIDATASTREAM_ID, sensor, CFG_SENSOR)
+            # Read observed property names
+            op_names = get_config_element(CFG_OBSERVED_PROPERTIES, sensor, CFG_SENSOR)
+            if len(op_names) < 1:
+                raise_config_error("No observed properties names defined in sensor {0} in YAML {1}".
+                                   format(str(sensor), yaml_path))
+            # Read properties
+            properties_list = get_config_element(CFG_PROPERTIES, sensor, CFG_SENSOR, optional=True)
+            properties = {}
+            if properties_list is not None:
+                properties = ChainMap(*properties_list)
+
+            args = [multidatastream_id] + op_names
+            return get_sensor_instance(sensor_type, *args, **properties)
 
         @classmethod
         def _read_sensor_configuration_datastream(cls, yaml_path, ds_id_present, sensor, get_sensor_instance):
