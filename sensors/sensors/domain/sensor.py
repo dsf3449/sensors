@@ -79,7 +79,7 @@ class MultiSensor:
         ISO-formatted string to apply a given observation.  If phenomenon_time is not set,
         generate_phenomenon_time() will be used.
         :param feature_of_interest_id:
-        :return: MultiObservation created
+        :return: A List[MultiObservation] of cardinality 1
         """
         t = phenomenon_time
         if t is None:
@@ -87,7 +87,7 @@ class MultiSensor:
         (results_dict, parameters) = self._read_results()
         # Report results in the order expected by the MultiDatastream
         results = [results_dict[opn] for opn in self.observed_property_names]
-        return self._make_multiobservation(feature_of_interest_id, self.multidatastream_id, t, results, **parameters)
+        return [self._make_multiobservation(feature_of_interest_id, self.multidatastream_id, t, results, **parameters)]
 
     @staticmethod
     def _make_multiobservation(feature_of_interest_id, multidatastream_id, phenomenon_time,
