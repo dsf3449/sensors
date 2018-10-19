@@ -11,6 +11,8 @@ class SqliteRepository:
     STATUS_PENDING = "PENDING"
     STATUS_ERROR = "ERROR"
 
+    MULTI_OBS_SEP = ','
+
     SQL_CREATE_OBS_TABLE = '''CREATE TABLE IF NOT EXISTS observation 
     (id INTEGER PRIMARY KEY ASC,
     featureOfInterestId TEXT,
@@ -63,8 +65,10 @@ class SqliteRepository:
                                                                  observation))
 
     def create_multiobservation(self, mo):
+        results = [str(i) for i in mo.results]
+        results_str = self.MULTI_OBS_SEP.join(results)
         observation = (mo.featureOfInterestId, mo.multidatastreamId,
-                       mo.phenomenonTime, mo.result, mo.get_parameters_as_str())
+                       mo.phenomenonTime, results_str, mo.get_parameters_as_str())
         self._perform_action_with_connection(lambda c: c.execute(SqliteRepository.SQL_CREATE_MULT_OBS,
                                                                  observation))
 
@@ -132,6 +136,6 @@ class SqliteRepository:
             mo.featureOfInterestId = r[1]
             mo.datastreamId = r[2]
             mo.phenomenonTime = r[3]
-            mo.result = r[4]
+            mo.results = [float(s) for s in r[4].split(SqliteRepository.MULTI_OBS_SEP)]
             mo.set_parameters_from_str(r[5])
             return mo
