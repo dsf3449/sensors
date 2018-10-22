@@ -160,31 +160,20 @@ class AirTempRHSensor(MultiSensor):
             self.humidity = humidity
 
 
-class ParticulateMatterSensor(Sensor):
-    VALID_OBSERVED_PROPERTIES = {CFG_OBSERVED_PROPERTY_PM}
+class ParticulateMatterSensor(MultiSensor):
+    VALID_OBSERVED_PROPERTIES = {CFG_OBSERVED_PROPERTY_PM1, CFG_OBSERVED_PROPERTY_PM25, CFG_OBSERVED_PROPERTY_PM10}
 
-    def _particulates(self):
-        """
-        Return tuple consisting of result, and parameters. Where:
-        Result is the concentration of PM 2.5 expressed in ug/m3.
-        Parameters is a dict of strings listing concentrations of
-        other particle sizes (e.g. PM 1.0, PM 10.0) as well as metadata,
-        which can include particle size distribution.
-        :return:
-        """
+    def _read_results(self):
         raise NotImplementedError
 
     def __init__(self, typ, *args, **kwargs):
         super().__init__(typ, *args, **kwargs)
 
         # Validate observed properties
-        if len(args) != 1:
+        if len(self.observed_property_names) != 1:
             raise ValueError("Sensor {0} must only have one observed property, but {1} were provided.". \
-                             format(self.NAME, len(args)))
-        op = args[0]
-        if op.name not in self.VALID_OBSERVED_PROPERTIES:
-            raise ValueError("Sensor {0} was configured with invalid observed property {1}". \
-                             format(self.NAME, op.name))
-
-        # Register with observation generation function lookup table
-        self.obs_func_tab[op.name] = self._particulates
+                             format(self.NAME, len(self.observed_property_names)))
+        for opn in self.observed_property_names:
+            if opn not in self.VALID_OBSERVED_PROPERTIES:
+                raise ValueError("Sensor {0} was configured with invalid observed property {1}". \
+                                 format(self.NAME, opn))
