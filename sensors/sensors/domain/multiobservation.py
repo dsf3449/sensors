@@ -14,7 +14,7 @@ class MultiObservation:
         phenomenonTime: {2}, results: {3}, parameters: {4}; id: {5}""".format(self.featureOfInterestId,
                                                                     self.multidatastreamId,
                                                                     self.phenomenonTime,
-                                                                    self.result,
+                                                                    str(self.results),
                                                                     str(self.parameters),
                                                                     self.id)
 

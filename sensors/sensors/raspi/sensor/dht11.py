@@ -51,7 +51,7 @@ class Dht11(AirTempRHSensor):
 
     def _read_results(self):
         dht11_result = self._read()
-        parameters = None
+        parameters = {}
         if not dht11_result.is_valid():
             parameters = {'error_code': dht11_result.get_error_text()}
         results = {CFG_OBSERVED_PROPERTY_AIR_TEMP: dht11_result.temperature,

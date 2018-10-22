@@ -13,7 +13,7 @@ class Dht11(AirTempRHSensor):
         rh = random.uniform(15.0, 99.99)
         results = {CFG_OBSERVED_PROPERTY_AIR_TEMP: t,
                    CFG_OBSERVED_PROPERTY_RH: rh}
-        parameters = None
+        parameters = {}
         return results, parameters
 
     def __init__(self, typ, *args, **kwargs):

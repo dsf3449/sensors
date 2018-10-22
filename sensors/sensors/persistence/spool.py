@@ -25,7 +25,7 @@ def spool_data(q):
         except KeyboardInterrupt:
             break
         except Exception as e:
-            logger.info("Spooler: caught exception: {0}".format(str(e)))
+            logger.exception("Spooler: caught exception: {0}".format(str(e)))
         finally:
             pass
     logger.info("Spooler: exiting.")
