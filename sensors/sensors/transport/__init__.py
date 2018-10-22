@@ -62,11 +62,10 @@ JSON_DATA_ARRAY_ELEM = ('['
                         ']')
 
 JSON_DATA_ARRAY_ELEM_NO_FOI = ('['
-                        '"{phenomenonTime}",'
-                        '{result},'
-                        '{{{parameters}}}'
-                        ']')
-
+                               '"{phenomenonTime}",'
+                               '{result},'
+                               '{{{parameters}}}'
+                               ']')
 
 
 def observations_to_json(observations_dict):
@@ -121,7 +120,7 @@ def observations_to_json(observations_dict):
                 d = None
                 if foi_present:
                     if is_multidatastream:
-                        d = JSON_MULTIDATASTREAM.format(datastreamId=datastream_id,
+                        d = JSON_MULTIDATASTREAM.format(multidatastreamId=datastream_id,
                                                         count=count,
                                                         dataArray=data_array.getvalue())
                     else:
@@ -131,7 +130,7 @@ def observations_to_json(observations_dict):
                                                    dataArray=data_array.getvalue())
                 else:
                     if is_multidatastream:
-                        d = JSON_MULTIDATASTREAM_NO_FOI.format(datastreamId=datastream_id,
+                        d = JSON_MULTIDATASTREAM_NO_FOI.format(multidatastreamId=datastream_id,
                                                                count=count,
                                                                dataArray=data_array.getvalue())
                     else:

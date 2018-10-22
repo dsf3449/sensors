@@ -65,7 +65,7 @@ class SqliteRepository:
                                                                  observation))
 
     def create_multiobservation(self, mo):
-        results = [str(i) for i in mo.results]
+        results = [str(i) for i in mo.result]
         results_str = self.MULTI_OBS_SEP.join(results)
         observation = (mo.featureOfInterestId, mo.multidatastreamId,
                        mo.phenomenonTime, results_str, mo.get_parameters_as_str())
@@ -134,8 +134,8 @@ class SqliteRepository:
             mo = MultiObservation()
             mo.id = r[0]
             mo.featureOfInterestId = r[1]
-            mo.datastreamId = r[2]
+            mo.multidatastreamId = r[2]
             mo.phenomenonTime = r[3]
-            mo.results = [float(s) for s in r[4].split(SqliteRepository.MULTI_OBS_SEP)]
+            mo.result = [float(s) for s in r[4].split(SqliteRepository.MULTI_OBS_SEP)]
             mo.set_parameters_from_str(r[5])
             return mo

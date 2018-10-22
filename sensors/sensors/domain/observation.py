@@ -38,16 +38,14 @@ class Observation:
 
     def set_parameters_from_str(self, parameters):
         self.parameters = {}
-        params = parameters.split(",")
-        for p in params:
-            try:
-                (k, v) = p.split(':')
-                self.parameters[k.strip('"')] = v.strip('"')
-            except ValueError:
-                # self.logger.error("set_parameters_from_json(): Unable to parse parameter {0}", p)
-                # continue
-                raise("set_parameters_from_json(): Unable to parse parameter {0}".\
-                    format(p))
+        if parameters is not None:
+            params = parameters.split(",")
+            for p in params:
+                try:
+                    (k, v) = p.split(':')
+                    self.parameters[k.strip('"')] = v.strip('"')
+                except ValueError:
+                    pass
 
     def get_parameters_as_str(self):
         return ",".join(['"{k}":"{v}"'.format(k=e[0], v=e[1]) for e in list(self.parameters.items())])

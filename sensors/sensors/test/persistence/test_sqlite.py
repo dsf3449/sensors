@@ -48,7 +48,7 @@ class TestSqliteRepository(unittest.TestCase):
         mo1.featureOfInterestId = "abcde"
         mo1.multidatastreamId = "1q2w3"
         mo1.phenomenonTime = "2017-04-11T15:35:55Z"
-        mo1.results = [0.1, 0.2, 0.3]
+        mo1.result = [0.1, 0.2, 0.3]
         parameters = {"five": "5", "six": "6"}
         mo1.set_parameters(**parameters)
         repo.create_multiobservation(mo1)
@@ -57,7 +57,7 @@ class TestSqliteRepository(unittest.TestCase):
         mo2.featureOfInterestId = "fghij"
         mo2.multidatastreamId = "p0o9i8"
         mo2.phenomenonTime = "2017-04-11T15:37:55Z"
-        mo2.results = [0.4, 0.5, 0.6]
+        mo2.result = [0.4, 0.5, 0.6]
         parameters = {"seven": "7", "eight": "8"}
         mo2.set_parameters(**parameters)
         repo.create_multiobservation(mo2)

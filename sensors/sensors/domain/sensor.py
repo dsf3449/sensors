@@ -96,7 +96,7 @@ class MultiSensor:
         o.featureOfInterestId = feature_of_interest_id
         o.multidatastreamId = multidatastream_id
         o.phenomenonTime = phenomenon_time
-        o.results = results
+        o.result = results
         o.set_parameters(**parameters)
 
         return o

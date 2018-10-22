@@ -6,17 +6,17 @@ class MultiObservation:
         self.featureOfInterestId = None
         self.multidatastreamId = None
         self.phenomenonTime = None
-        self.results = None
+        self.result = None
         self.parameters = None
 
     def __str__(self):
         return """featureOfInterestId: {0}, multidatastreamId: {1}, 
         phenomenonTime: {2}, results: {3}, parameters: {4}; id: {5}""".format(self.featureOfInterestId,
-                                                                    self.multidatastreamId,
-                                                                    self.phenomenonTime,
-                                                                    str(self.results),
-                                                                    str(self.parameters),
-                                                                    self.id)
+                                                                              self.multidatastreamId,
+                                                                              self.phenomenonTime,
+                                                                              str(self.result),
+                                                                              str(self.parameters),
+                                                                              self.id)
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -27,7 +27,7 @@ class MultiObservation:
             return False
         if self.phenomenonTime != other.phenomenonTime:
             return False
-        if self.results != other.results:
+        if self.result != other.result:
             return False
         if self.parameters != other.parameters:
             return False
@@ -38,16 +38,14 @@ class MultiObservation:
 
     def set_parameters_from_str(self, parameters):
         self.parameters = {}
-        params = parameters.split(",")
-        for p in params:
-            try:
-                (k, v) = p.split(':')
-                self.parameters[k.strip('"')] = v.strip('"')
-            except ValueError:
-                # self.logger.error("set_parameters_from_json(): Unable to parse parameter {0}", p)
-                # continue
-                raise("set_parameters_from_json(): Unable to parse parameter {0}".\
-                    format(p))
+        if parameters is not None:
+            params = parameters.split(",")
+            for p in params:
+                try:
+                    (k, v) = p.split(':')
+                    self.parameters[k.strip('"')] = v.strip('"')
+                except ValueError:
+                    pass
 
     def get_parameters_as_str(self):
         return ",".join(['"{k}":"{v}"'.format(k=e[0], v=e[1]) for e in list(self.parameters.items())])
