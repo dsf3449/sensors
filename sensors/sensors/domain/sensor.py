@@ -170,8 +170,8 @@ class ParticulateMatterSensor(MultiSensor):
         super().__init__(typ, *args, **kwargs)
 
         # Validate observed properties
-        if len(self.observed_property_names) != 1:
-            raise ValueError("Sensor {0} must only have one observed property, but {1} were provided.". \
+        if len(self.observed_property_names) < 1:
+            raise ValueError("Sensor {0} must only have at least one observed property, but {1} were provided.". \
                              format(self.NAME, len(self.observed_property_names)))
         for opn in self.observed_property_names:
             if opn not in self.VALID_OBSERVED_PROPERTIES:
