@@ -2,6 +2,7 @@ import sqlite3
 
 from sensors.common.constants import CFG_SPOOLER_DB_PATH
 from sensors.domain.observation import Observation
+from sensors.domain.multiobservation import MultiObservation
 from sensors.common import logging
 
 
@@ -10,6 +11,8 @@ class SqliteRepository:
     STATUS_PENDING = "PENDING"
     STATUS_ERROR = "ERROR"
 
+    MULTI_OBS_SEP = ','
+
     SQL_CREATE_OBS_TABLE = '''CREATE TABLE IF NOT EXISTS observation 
     (id INTEGER PRIMARY KEY ASC,
     featureOfInterestId TEXT,
@@ -17,12 +20,17 @@ class SqliteRepository:
     phenomenonTime DATETIME,
     result TEXT NOT NULL,
     parameters TEXT,
-    status TEXT NOT NULL CHECK (status="PENDING" or status="ERROR") DEFAULT "PENDING")
+    status TEXT NOT NULL CHECK (status="PENDING" or status="ERROR") DEFAULT "PENDING",
+    is_multiobservation INTEGER NOT NULL CHECK(is_multiobservation = 0 or is_multiobservation = 1) DEFAULT 0)
     '''
     SQL_CREATE_OBS = ("INSERT INTO observation "
                       "(featureOfInterestId, datastreamId, phenomenonTime, result, parameters) "
                       "VALUES (?, ?, ?, ?, ?)"
                       )
+    SQL_CREATE_MULT_OBS = ("INSERT INTO observation "
+                           "(featureOfInterestId, datastreamId, phenomenonTime, result, parameters, is_multiobservation) "
+                           "VALUES (?, ?, ?, ?, ?, 1)"
+                          )
     SQL_GET_OBS = 'SELECT * FROM observation WHERE status="PENDING" LIMIT ?'
     SQL_GET_ALL_OBS = 'SELECT * FROM observation'
     SQL_DELETE_OBS = "DELETE FROM observation WHERE id IN ({0})"
@@ -56,6 +64,14 @@ class SqliteRepository:
         self._perform_action_with_connection(lambda c: c.execute(SqliteRepository.SQL_CREATE_OBS,
                                                                  observation))
 
+    def create_multiobservation(self, mo):
+        results = [str(i) for i in mo.result]
+        results_str = self.MULTI_OBS_SEP.join(results)
+        observation = (mo.featureOfInterestId, mo.multidatastreamId,
+                       mo.phenomenonTime, results_str, mo.get_parameters_as_str())
+        self._perform_action_with_connection(lambda c: c.execute(SqliteRepository.SQL_CREATE_MULT_OBS,
+                                                                 observation))
+
     def get_observations(self, limit="360"):
         observations = []
 
@@ -65,14 +81,7 @@ class SqliteRepository:
                 attempts += 1
                 try:
                     for r in conn.execute(SqliteRepository.SQL_GET_OBS, (limit,)):
-                        o = Observation()
-                        o.id = r[0]
-                        o.featureOfInterestId = r[1]
-                        o.datastreamId = r[2]
-                        o.phenomenonTime = r[3]
-                        o.result = r[4]
-                        o.set_parameters_from_str(r[5])
-                        observations.append(o)
+                        observations.append(self._get_observation_from_row(r))
                     break
                 except sqlite3.OperationalError as e:
                     self.logger.warn("Error encountered reading observations from SQLite database, error was: {0}"
@@ -103,14 +112,30 @@ class SqliteRepository:
 
         with sqlite3.connect(self.db_path) as conn:
             for r in conn.execute(SqliteRepository.SQL_GET_ALL_OBS):
-                o = Observation()
-                o.id = r[0]
-                o.featureOfInterestId = r[1]
-                o.datastreamId = r[2]
-                o.phenomenonTime = r[3]
-                o.result = r[4]
-                o.set_parameters_from_str(r[5])
-                observations.append(o)
+                observations.append(self._get_observation_from_row(r))
             conn.commit()
 
         return observations
+
+    @staticmethod
+    def _get_observation_from_row(r):
+        if r[7] == 0:
+            # is_multiobservation is False, this is a regular Observation
+            o = Observation()
+            o.id = r[0]
+            o.featureOfInterestId = r[1]
+            o.datastreamId = r[2]
+            o.phenomenonTime = r[3]
+            o.result = r[4]
+            o.set_parameters_from_str(r[5])
+            return o
+        else:
+            # is_multiobservation is False, this is a MultiObservation
+            mo = MultiObservation()
+            mo.id = r[0]
+            mo.featureOfInterestId = r[1]
+            mo.multidatastreamId = r[2]
+            mo.phenomenonTime = r[3]
+            mo.result = [float(s) for s in r[4].split(SqliteRepository.MULTI_OBS_SEP)]
+            mo.set_parameters_from_str(r[5])
+            return mo

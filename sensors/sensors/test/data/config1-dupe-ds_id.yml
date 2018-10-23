@@ -12,12 +12,10 @@ sensors:
     observed_properties:
       - name: ozone
         datastream_id: 1af6b695-07c0-4024-aeb8-4ddf64dbf458
-  - type: dht11
+  - type: sm50
     observed_properties:
-      - name: air_temperature
+      - name: ozone
         datastream_id: 1af6b695-07c0-4024-aeb8-4ddf64dbf458
-      - name: relative_humidity
-        datastream_id: ebb0cb98-f1ef-4bec-875f-f4775cd48bcd
 transports:
   - type: https
     properties:

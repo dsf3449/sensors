@@ -1,29 +1,29 @@
 
-class Observation:
+class MultiObservation:
 
     def __init__(self):
         self.id = None
         self.featureOfInterestId = None
-        self.datastreamId = None
+        self.multidatastreamId = None
         self.phenomenonTime = None
         self.result = None
         self.parameters = None
 
     def __str__(self):
-        return """featureOfInterestId: {0}, datastreamId: {1}, 
-        phenomenonTime: {2}, result: {3}, parameters: {4}; id: {5}""".format(self.featureOfInterestId,
-                                                                    self.datastreamId,
-                                                                    self.phenomenonTime,
-                                                                    self.result,
-                                                                    str(self.parameters),
-                                                                    self.id)
+        return """featureOfInterestId: {0}, multidatastreamId: {1}, 
+        phenomenonTime: {2}, results: {3}, parameters: {4}; id: {5}""".format(self.featureOfInterestId,
+                                                                              self.multidatastreamId,
+                                                                              self.phenomenonTime,
+                                                                              str(self.result),
+                                                                              str(self.parameters),
+                                                                              self.id)
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
         if self.featureOfInterestId != other.featureOfInterestId:
             return False
-        if self.datastreamId != other.datastreamId:
+        if self.multidatastreamId != other.multidatastreamId:
             return False
         if self.phenomenonTime != other.phenomenonTime:
             return False

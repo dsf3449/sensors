@@ -86,7 +86,7 @@ def sample(start_date=datetime.now(timezone.utc).isoformat(),
             s.run()
             logger.debug("Sampler: End of iteration.")
     except:
-        pass
+        logger.exception("Simulator: exception caught in sample()")
     finally:
         if p:
             p.join()

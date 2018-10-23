@@ -6,6 +6,7 @@ import logging
 from sensors.common.constants import *
 from sensors.config import Config, ConfigurationError
 from sensors.domain.sensor import Sensor
+from sensors.domain.sensor import MultiSensor
 from sensors.domain.observed_property import ObservedProperty
 from sensors.transport.https import HttpsTransport
 from sensors.domain.adc import ADCType
@@ -49,20 +50,14 @@ class TestConfiguration(unittest.TestCase):
         self.assertEqual(o.datastream_id, '1af6b695-07c0-4024-aeb8-4ddf64dbf458')
         # 2nd sensor
         s = sensors[1]
-        self.assertTrue(isinstance(s, Sensor))
+        self.assertTrue(isinstance(s, MultiSensor))
         self.assertEqual(CFG_SENSOR_TYPE_DHT11, s.typ)
-        ops = s.observed_properties
-        self.assertEqual(len(ops), 2)
-        # First observed property
-        o = ops[0]
-        self.assertTrue(isinstance(o, ObservedProperty))
-        self.assertEqual(o.name, 'air_temperature')
-        self.assertEqual(o.datastream_id, '1874209f-72b0-4d7f-993c-2707fa01ccd2')
-        # Second observed property
-        o = ops[1]
-        self.assertTrue(isinstance(o, ObservedProperty))
-        self.assertEqual(o.name, 'relative_humidity')
-        self.assertEqual(o.datastream_id, 'ebb0cb98-f1ef-4bec-875f-f4775cd48bcd')
+        opn = s.observed_property_names
+        self.assertEqual(len(opn), 2)
+        # First observed property name
+        self.assertEqual(opn[0], 'air_temperature')
+        # Second observed property name
+        self.assertEqual(opn[1], 'relative_humidity')
         # Transports
         transports = c[CFG_TRANSPORTS]
         self.assertEqual(len(transports), 1)

@@ -550,7 +550,7 @@ class LearnSTAClient:
                     m = mds[mds['multidatastreamnum'] == m_num]
                     cfile.write("  - type: " + str(m['sensortype'].iloc[0]) + '\n')
                     mds_id = m['stamultidatastreamid'].unique()[0].strip("'")
-                    cfile.write("    datastream_id: " + mds_id + '\n')
+                    cfile.write("    multidatastream_id: " + mds_id + '\n')
                     cfile.write("    observed_properties:" + '\n')
                     # import pdb;
                     # pdb.set_trace()
@@ -560,8 +560,8 @@ class LearnSTAClient:
                 cfile.write("transports:"+'\n')
                 cfile.write("  - type: https"+'\n')
                 cfile.write("    properties:"+'\n')
-                cfile.write("      auth_url: https://test1-sta-api.learnlafayette.com/SensorThingsService/auth/login"+'\n')
-                cfile.write("      url: https://test1-sta-api.learnlafayette.com/SensorThingsService/v1.0/"+'\n')
+                cfile.write("      auth_url: " + self.authurl +'\n')
+                cfile.write("      url: " + self.baseurl +'\n')
                 cfile.write("      jwt_id: "+jwt_id+'\n')
                 cfile.write("      jwt_key: "+jwt_key+'\n')
                 cfile.write("      jwt_token_ttl_minutes: 15"+'\n')

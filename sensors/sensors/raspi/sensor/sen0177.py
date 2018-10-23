@@ -1,4 +1,5 @@
 import serial
+import math
 
 from sensors.domain.sensor import ParticulateMatterSensor
 from sensors.common.constants import *
@@ -57,23 +58,26 @@ class Sen0177(ParticulateMatterSensor):
             return Sen0177.Sen0177Result(False, 0, 0, 0, 0, 0, 0, 0, 0, 0)
         return Sen0177.Sen0177Result(True, data[3], data[4], data[5], data[9], data[10], data[11], data[12], data[13], data[14])
 
-    def _particulates(self):
+    def _read_results(self):
         port = None
         try:
             port = serial.Serial("/dev/serial0", baudrate=9600, timeout=2)
             data = Sen0177._read_sen0177(port)
-            result = None
             pm1 = None
+            pm25 = None
             pm10 = None
             if data.valid:
-                result = float(data.pm25)
                 pm1 = data.pm10
+                pm25 = data.pm25
                 pm10 = data.pm100
             else:
-                result = pm1 = pm10 = float('nan')
-            parameters = {"pm1": str(pm1),
-                          "pm10": str(pm10)}
-            return result, parameters
+                pm1 = pm25 = pm10 = math.nan
+
+            results = {CFG_OBSERVED_PROPERTY_PM1: pm1,
+                       CFG_OBSERVED_PROPERTY_PM25: pm25,
+                       CFG_OBSERVED_PROPERTY_PM10: pm10}
+            parameters = {}
+            return results, parameters
         finally:
             if port is not None:
                 port.close()

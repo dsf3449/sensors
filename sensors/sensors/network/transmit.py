@@ -43,9 +43,9 @@ def main():
         except KeyboardInterrupt:
             break
         except AuthenticationException as ae:
-            logger.error("Transmitter: {0}".format(ae.message))
+            logger.exception("Transmitter: {0}".format(ae.message))
         except TransmissionException as te:
-            logger.error("Transmitter: {0}".format(te.message))
+            logger.exception("Transmitter: {0}".format(te.message))
         finally:
             pass
     logger.info("Transmitter: exiting.")
