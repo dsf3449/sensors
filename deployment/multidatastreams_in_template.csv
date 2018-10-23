@@ -1,0 +1,8 @@
+devicenum,multidatastreamnum,stamultidatastreamid,mdssensorid,mdsname,mdsdesc,sensortype
+1,1,,01bd2246-168d-11e8-b2ce-c76f5086fe6c,Small Thing 1 (Air temperature; RH),Air temperature and relative humidity (DHT11),dht11
+1001,2,,9932d6fc-d645-11e8-93fc-83b63bbd9cb5,Large Thing 1001 (Particulate Matter; SEN0177),"Un-calibrated particulate matter: PM 1, PM 2.5, and PM 10 (SEN0177)",sen0177
+1001,3,,9932d6fc-d645-11e8-93fc-83b63bbd9cb5,Large Thing 1001 (Particulate Matter; SEN0177) Calibrated,"Calibrated particulate matter: PM 1, PM 2.5, and PM 10 (SEN0177)",sen0177
+1001,4,,9932d6fc-d645-11e8-93fc-83b63bbd9cb5,Large Thing 1001 (Particulate Matter; SEN0177) AQI,"Air Quality Index (AQI) for particulate matter: PM 2.5, and PM 10 (SEN0177)",sen0177
+1001,5,,9b432be6-ccc1-11e8-ae42-f70ea3366b81,Large Thing 1001 (Particulate Matter; OPC-N2),"Un-calibrated particulate matter: PM 1, PM 2.5, and PM 10 (OPC-N2)",opcn2
+1001,6,,9b432be6-ccc1-11e8-ae42-f70ea3366b81,Large Thing 1001 (Particulate Matter; OPC-N2) Calibrated,"Calibrated particulate matter: PM 1, PM 2.5, and PM 10 (OPC-N2)",opcn2
+1001,7,,9b432be6-ccc1-11e8-ae42-f70ea3366b81,Large Thing 1001 (Particulate Matter; OPC-N2) AQI,"Air Quality Index (AQI) for particulate matter: PM 2.5, and PM 10 (OPC-N2)",opcn2

@@ -58,7 +58,7 @@ def sample():
             s.run()
             logger.debug("Raspberry Pi Sampler: End of iteration.")
     except:
-        pass
+        logger.exception("Raspberry Pi Sampler: Exception caught in sample()")
     finally:
         logger.info("Raspberry Pi Sampler: exiting.")
 
