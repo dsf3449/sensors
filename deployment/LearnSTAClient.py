@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 import re
 
 import requests
+import numpy as np
 import pandas as pd
 
 
@@ -304,8 +305,12 @@ class LearnSTAClient:
                 obs_props.append(c['dsobspropertyid'])
                 # Collect ObservationType
                 obs_data_types.append(c['dsobstype'])
+                symbol = c['dsmsymbol']
+                # set_trace()
+                if symbol.__class__ != str and np.isnan(symbol):
+                    symbol = None
                 # Create unit of measurement
-                units_of_meas.append(self.create_unit_of_measurement(c['dsmunit'], c['dsmsymbol'], c['dsmdefinition']))
+                units_of_meas.append(self.create_unit_of_measurement(c['dsmunit'], symbol, c['dsmdefinition']))
 
             # Create MultiDatastream
             mdsjson = json.dumps(
@@ -548,14 +553,15 @@ class LearnSTAClient:
                 mds_num_list = list(mds['multidatastreamnum'].unique())
                 for m_num in mds_num_list:
                     m = mds[mds['multidatastreamnum'] == m_num]
-                    cfile.write("  - type: " + str(m['sensortype'].iloc[0]) + '\n')
-                    mds_id = m['stamultidatastreamid'].unique()[0].strip("'")
-                    cfile.write("    multidatastream_id: " + mds_id + '\n')
-                    cfile.write("    observed_properties:" + '\n')
-                    # import pdb;
-                    # pdb.set_trace()
-                    for o in m['dsobsproperty'].unique():
-                        cfile.write("      - " + o + "\n");
+                    if m['yml'].iloc[0]:
+                        cfile.write("  - type: " + str(m['sensortype'].iloc[0]) + '\n')
+                        mds_id = m['stamultidatastreamid'].unique()[0].strip("'")
+                        cfile.write("    multidatastream_id: " + mds_id + '\n')
+                        cfile.write("    observed_properties:" + '\n')
+                        # import pdb;
+                        # pdb.set_trace()
+                        for o in m['dsobsproperty'].unique():
+                            cfile.write("      - " + o + "\n")
 
                 cfile.write("transports:"+'\n')
                 cfile.write("  - type: https"+'\n')
