@@ -1,4 +1,5 @@
 import io
+import math
 
 from sensors.domain.observation import Observation
 from sensors.domain.multiobservation import MultiObservation
@@ -68,7 +69,7 @@ JSON_DATA_ARRAY_ELEM_NO_FOI = ('['
                                ']')
 
 
-def observations_to_json(observations_dict):
+def observations_to_json(observations_dict, allow_nan=False):
     json = io.StringIO()
 
     datastreams = observations_dict.keys()
@@ -87,31 +88,37 @@ def observations_to_json(observations_dict):
                 # Check to see if this is a MultiObservation, if so we are
                 # dealing with a MultiDatastream
                 is_multidatastream = isinstance(o, MultiObservation)
+                result = o.result
+                if not allow_nan:
+                    result = _filter_nan(result, is_multidatastream)
                 e = None
                 foi_present = False
                 if o.featureOfInterestId is not None:
                     foi_present = True
                     e = JSON_DATA_ARRAY_ELEM.format(phenomenonTime=o.phenomenonTime,
-                                                    result=o.result,
+                                                    result=result,
                                                     featureOfInterestId=o.featureOfInterestId,
                                                     parameters=o.get_parameters_as_str())
                 else:
                     foi_present = False
                     e = JSON_DATA_ARRAY_ELEM_NO_FOI.format(phenomenonTime=o.phenomenonTime,
-                                                           result=o.result,
+                                                           result=result,
                                                            featureOfInterestId=o.featureOfInterestId,
                                                            parameters=o.get_parameters_as_str())
                 data_array.write(e)
                 # Write remaining elements to dataArray
                 for o in obs_for_ds[1:]:
+                    result = o.result
+                    if not allow_nan:
+                        result = _filter_nan(result, is_multidatastream)
                     if foi_present:
                         e = JSON_DATA_ARRAY_ELEM.format(phenomenonTime=o.phenomenonTime,
-                                                        result=o.result,
+                                                        result=result,
                                                         featureOfInterestId=o.featureOfInterestId,
                                                         parameters=o.get_parameters_as_str())
                     else:
                         e = JSON_DATA_ARRAY_ELEM_NO_FOI.format(phenomenonTime=o.phenomenonTime,
-                                                               result=o.result,
+                                                               result=result,
                                                                featureOfInterestId=o.featureOfInterestId,
                                                                parameters=o.get_parameters_as_str())
                     data_array.write(',')
@@ -149,3 +156,19 @@ def observations_to_json(observations_dict):
     json.close()
 
     return json_str
+
+
+def _filter_nan(result, is_multidatastream, replacement=None):
+    if is_multidatastream:
+        new_result = []
+        for (i, r) in enumerate(result):
+            if result[i] is math.nan:
+                new_result.append(replacement)
+            else:
+                new_result.append(r)
+        return new_result
+    else:
+        if result is math.nan:
+            return replacement
+        else:
+            return result
