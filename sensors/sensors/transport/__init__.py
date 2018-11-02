@@ -138,13 +138,13 @@ def _filter_nan(result, is_multidatastream, replacement=None):
     if is_multidatastream:
         new_result = []
         for (i, r) in enumerate(result):
-            if math.isnan(result[i]):
+            if type(result[i]) is float and math.isnan(result[i]):
                 new_result.append(replacement)
             else:
                 new_result.append(r)
         return new_result
     else:
-        if math.isnan(result):
+        if type(result) is float and math.isnan(result):
             return replacement
         else:
             return result
