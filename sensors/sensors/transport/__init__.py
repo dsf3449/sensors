@@ -1,4 +1,6 @@
 import io
+import math
+import json
 
 from sensors.domain.observation import Observation
 from sensors.domain.multiobservation import MultiObservation
@@ -54,28 +56,15 @@ JSON_MULTIDATASTREAM_NO_FOI = ('{{"MultiDatastream":{{"@iot.id":"{multidatastrea
                           '"dataArray":[{dataArray}]'
                           '}}')
 
-JSON_DATA_ARRAY_ELEM = ('['
-                        '"{phenomenonTime}",'
-                        '{result},'
-                        '"{featureOfInterestId}",'
-                        '{{{parameters}}}'
-                        ']')
 
-JSON_DATA_ARRAY_ELEM_NO_FOI = ('['
-                               '"{phenomenonTime}",'
-                               '{result},'
-                               '{{{parameters}}}'
-                               ']')
-
-
-def observations_to_json(observations_dict):
-    json = io.StringIO()
+def observations_to_json(observations_dict, allow_nan=False):
+    json_str_io = io.StringIO()
 
     datastreams = observations_dict.keys()
     num_datastreams = len(datastreams)
 
     if num_datastreams > 0:
-        json.write('[')
+        json_str_io.write('[')
         for (i, datastream_id) in enumerate(datastreams, start=1):
             obs_for_ds = observations_dict[datastream_id]
             count = len(obs_for_ds)
@@ -87,35 +76,29 @@ def observations_to_json(observations_dict):
                 # Check to see if this is a MultiObservation, if so we are
                 # dealing with a MultiDatastream
                 is_multidatastream = isinstance(o, MultiObservation)
+                result = o.result
+                if not allow_nan:
+                    result = _filter_nan(result, is_multidatastream)
                 e = None
                 foi_present = False
                 if o.featureOfInterestId is not None:
                     foi_present = True
-                    e = JSON_DATA_ARRAY_ELEM.format(phenomenonTime=o.phenomenonTime,
-                                                    result=o.result,
-                                                    featureOfInterestId=o.featureOfInterestId,
-                                                    parameters=o.get_parameters_as_str())
+                    e = [o.phenomenonTime, result, o.featureOfInterestId, o.parameters]
                 else:
                     foi_present = False
-                    e = JSON_DATA_ARRAY_ELEM_NO_FOI.format(phenomenonTime=o.phenomenonTime,
-                                                           result=o.result,
-                                                           featureOfInterestId=o.featureOfInterestId,
-                                                           parameters=o.get_parameters_as_str())
-                data_array.write(e)
+                    e = [o.phenomenonTime, result, o.parameters]
+                data_array.write(json.dumps(e))
                 # Write remaining elements to dataArray
                 for o in obs_for_ds[1:]:
+                    result = o.result
+                    if not allow_nan:
+                        result = _filter_nan(result, is_multidatastream)
                     if foi_present:
-                        e = JSON_DATA_ARRAY_ELEM.format(phenomenonTime=o.phenomenonTime,
-                                                        result=o.result,
-                                                        featureOfInterestId=o.featureOfInterestId,
-                                                        parameters=o.get_parameters_as_str())
+                        e = [o.phenomenonTime, result, o.featureOfInterestId, o.parameters]
                     else:
-                        e = JSON_DATA_ARRAY_ELEM_NO_FOI.format(phenomenonTime=o.phenomenonTime,
-                                                               result=o.result,
-                                                               featureOfInterestId=o.featureOfInterestId,
-                                                               parameters=o.get_parameters_as_str())
+                        e = [o.phenomenonTime, result, o.parameters]
                     data_array.write(',')
-                    data_array.write(e)
+                    data_array.write(json.dumps(e))
                 # Second, generate Datastream JSON (with all dataArray elements)
                 d = None
                 if foi_present:
@@ -140,12 +123,28 @@ def observations_to_json(observations_dict):
                                                           dataArray=data_array.getvalue())
                 data_array.close()
                 # Third, write Datastream JSON
-                json.write(d)
+                json_str_io.write(d)
                 if i < num_datastreams:
                     # There is one or more remaining Datastream(s)
-                    json.write(',')
-        json.write(']')
-    json_str = json.getvalue()
-    json.close()
+                    json_str_io.write(',')
+        json_str_io.write(']')
+    json_str = json_str_io.getvalue()
+    json_str_io.close()
 
     return json_str
+
+
+def _filter_nan(result, is_multidatastream, replacement=None):
+    if is_multidatastream:
+        new_result = []
+        for (i, r) in enumerate(result):
+            if type(result[i]) is float and math.isnan(result[i]):
+                new_result.append(replacement)
+            else:
+                new_result.append(r)
+        return new_result
+    else:
+        if type(result) is float and math.isnan(result):
+            return replacement
+        else:
+            return result
