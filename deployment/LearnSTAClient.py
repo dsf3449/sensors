@@ -13,7 +13,6 @@ https://github.com/opengeospatial/sensorthings
 import json
 import uuid
 from datetime import datetime, timedelta
-import re
 
 import requests
 import numpy as np
@@ -78,7 +77,14 @@ class LearnSTAClient:
                 new_token = (r.json()["token"], datetime.utcnow())
 
         return new_token
-         
+
+    def get_id_from_url(self, url):
+        paren_idx = url.rfind('(')
+        if paren_idx >= 0 and paren_idx < len(url):
+            return url[paren_idx+1:-1].strip("'")
+        else:
+            return None
+
     def createlocation(self,name,description,latitude,longitude):
         geometry= {}
         geometry['type']= "Point"
@@ -206,7 +212,9 @@ class LearnSTAClient:
         print (sensorjson)
         headers = {'Content-Type': 'application/json','Authorization': "Bearer {token}".format(token=jwt_token[0])}
         r = session.post(self.baseurl+"/Sensors", headers=headers, data=sensorjson, verify=self.VERIFY_SSL)
-        print (r)
+        print(r.status_code)
+        print(r.headers["Location"])
+        return self.get_id_from_url(r.headers["Location"])
     
     def createobservedproperty(self,name,definition,description):
         session = requests.session()
@@ -218,8 +226,10 @@ class LearnSTAClient:
         jwt_token = self.jwt_authenticate()
         headers = {'Content-Type': 'application/json','Authorization': "Bearer {token}".format(token=jwt_token[0])}
         r = session.post(self.baseurl+"/ObservedProperties", headers=headers, data=obspropjson, verify=self.VERIFY_SSL)
-        print (r)
-    
+        print(r.status_code)
+        print(r.headers["Location"])
+        return self.get_id_from_url(r.headers["Location"])
+
     def createlocationrec(self,name,description,latitude,longitude):
         session = requests.session()
         obsloc=self.createlocation(name,description,latitude,longitude)
@@ -227,8 +237,10 @@ class LearnSTAClient:
         jwt_token = self.jwt_authenticate()
         headers = {'Content-Type': 'application/json','Authorization': "Bearer {token}".format(token=jwt_token[0])}
         r = session.post(self.baseurl+"/Locations", headers=headers, data=obslocjson, verify=self.VERIFY_SSL)
-        print (r)
-    
+        print(r.status_code)
+        print(r.headers["Location"])
+        return self.get_id_from_url(r.headers["Location"])
+
     def createsensorthing(self,row):
         session = requests.session()
         try:
@@ -240,6 +252,33 @@ class LearnSTAClient:
             # Create Thing
             print ("Creating Things")
             thingjson =json.dumps(self.createThing(row['locationid'],row['thname'],row['thdesc'],row['thnetid'],
+                                                   row['thdeploytime']), ensure_ascii=False).encode('utf8')
+            r = session.post(self.baseurl+"/Things", headers=headers, data=thingjson, verify=self.VERIFY_SSL)
+            print(r.status_code)
+            print(r.text)
+            print (" Printing thing headers ")
+            print (r.headers)
+            thstr=r.headers["Location"]
+            thingid=thstr[thstr.find("(")+1:thstr.find(")")]
+            #print (thstr)
+            #print (thingid)
+            return thingid
+        except:
+            raise
+            print ("error")
+            return 'Error'
+
+    def createsensorthing_dev(self,row, location_id):
+        session = requests.session()
+        try:
+            # Get Token
+            jwt_token = self.jwt_authenticate()
+            print (jwt_token)
+            headers = {'Content-Type': 'application/json','Authorization': "Bearer {token}".format(token=jwt_token[0])}
+
+            # Create Thing
+            print ("Creating Things")
+            thingjson =json.dumps(self.createThing(location_id,row['thname'],row['thdesc'],row['thnetid'],
                                                    row['thdeploytime']), ensure_ascii=False).encode('utf8')
             r = session.post(self.baseurl+"/Things", headers=headers, data=thingjson, verify=self.VERIFY_SSL)
             print(r.status_code)
@@ -272,6 +311,35 @@ class LearnSTAClient:
                 # encoded file
                 symbol = '\u00B0C'
             dsjson =json.dumps(self.createDatastream(row['stathingid'],row['dssensorid'],row['dsobspropertyid'],row['dsname'],
+                                                     row['dsdesc'],row['dsmunit'], symbol,
+                                                     row['dsmdefinition'],row['dsobstype']), ensure_ascii=False).encode('utf8')
+            r = session.post(self.baseurl+"/Datastreams", headers=headers, data=dsjson, verify=self.VERIFY_SSL)
+            print(r.status_code)
+            print(r.text)
+            dsstr=r.headers["Location"]
+            dsstrid=dsstr[dsstr.find("(")+1:dsstr.find(")")]
+            print (dsstr,dsstrid)
+            return dsstrid
+
+        except:
+            return 'Error'
+
+    def createdatastream_dev(self,row, thing_id, sensor_id, obs_prop_id):
+        session = requests.session()
+        try:
+            # Get Token
+            jwt_token = self.jwt_authenticate()
+            print (jwt_token)
+            headers = {'Content-Type': 'application/json; charset=utf-8','Authorization': "Bearer {token}".format(token=jwt_token[0])}
+
+            # Create Datastream
+            print ("Creating Datastreams")
+            symbol = row['dsmsymbol']
+            if row['dsmunit'] == 'degree Celsius':
+                # Hack to get around Pandas's seeming inability to properly decode the degree symbol from a windows-1252-
+                # encoded file
+                symbol = '\u00B0C'
+            dsjson =json.dumps(self.createDatastream(thing_id,sensor_id,obs_prop_id,row['dsname'],
                                                      row['dsdesc'],row['dsmunit'], symbol,
                                                      row['dsmdefinition'],row['dsobstype']), ensure_ascii=False).encode('utf8')
             r = session.post(self.baseurl+"/Datastreams", headers=headers, data=dsjson, verify=self.VERIFY_SSL)
@@ -408,6 +476,11 @@ class LearnSTAClient:
         dfthings['jwt_key'] = dfthings.apply(self.Getuuid, axis=1)
 #         dfthings['stalocationid'] = dfthings.apply(self.Getuuid, axis=1)
         dfthings.to_csv(outputthingsfilepath,index=False)
+
+    def createthings_dev(self, inputthingsfilepath, location_id):
+        dfthings = pd.read_csv(inputthingsfilepath)
+        row = dfthings.iloc[0]
+        return self.createsensorthing_dev(row, location_id)
         
     def createdatastreams(self,inputdatastreamsfilepath,outputdatastreamsfilepath,inputthingsfilepath):
         dfthings=pd.read_csv(inputthingsfilepath)
@@ -417,6 +490,11 @@ class LearnSTAClient:
         dfdatastreams['QAQC_stadatastreamid'] = dfdatastreams.apply(self.createdatastreamQAQC, axis=1)
         dfdatastreams['AQI_stadatastreamid'] = dfdatastreams.apply(self.createdatastreamAQI, axis=1)
         dfdatastreams.to_csv(outputdatastreamsfilepath, index=False, encoding=DEFAULT_ENCODING)
+
+    def createdatastreams_dev(self,inputdatastreamsfilepath, thing_id, sensor_id, obs_prop_id):
+        dfdatastreams=pd.read_csv(inputdatastreamsfilepath, encoding=DEFAULT_ENCODING)
+        row = dfdatastreams.iloc[0]
+        return self.createdatastream_dev(row, thing_id, sensor_id, obs_prop_id)
 
     def create_multidatastreams(self, input_mds_filepath, output_mds_filepath,
                                 input_mds_datastreams_filepath,
