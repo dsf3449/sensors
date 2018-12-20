@@ -74,6 +74,7 @@ class LearnSTAClient:
                 print ("Authentication failed with status code {0}".format(str(r.status_code)))
                 #raise AuthenticationException("Authentication failed with status code {0}".format(str(r.status_code)))
             else:
+                print("Raw token was: {0}".format(str(r.json())))
                 new_token = (r.json()["token"], datetime.utcnow())
 
         return new_token
@@ -268,6 +269,32 @@ class LearnSTAClient:
             print ("error")
             return 'Error'
 
+    def update_thing_location(self, thing_id, location_id):
+        session = requests.session()
+        try:
+            # Get Token
+            jwt_token = self.jwt_authenticate()
+            print (jwt_token)
+            headers = {'Content-Type': 'application/json','Authorization': "Bearer {token}".format(token=jwt_token[0])}
+
+            # Update Thing Location
+            print ("Updating Thing {0} to Location {1}".format(thing_id, location_id))
+            location = {}
+            location['@iot.id'] = location_id
+            patch = {'Locations': [location]}
+            patch_json = json.dumps(patch, ensure_ascii=False).encode('utf8')
+            url = self.baseurl+"/Things('{0}')".format(thing_id.replace("'", ""))
+            print("URL: {0}".format(url))
+            r = session.patch(url, headers=headers, data=patch_json, verify=self.VERIFY_SSL)
+            print(r.status_code)
+            print(r.text)
+            print (" Printing thing headers ")
+            print (r.headers)
+        except:
+            raise
+            print ("error")
+            return 'Error'
+
     def createsensorthing_dev(self,row, location_id):
         session = requests.session()
         try:
@@ -350,6 +377,32 @@ class LearnSTAClient:
             print (dsstr,dsstrid)
             return dsstrid
 
+        except:
+            return 'Error'
+
+    def create_observation(self, datastream_id, phenomenon_time, result):
+        session = requests.session()
+        try:
+            # Get Token
+            jwt_token = self.jwt_authenticate()
+            print(jwt_token)
+            headers = {'Content-Type': 'application/json; charset=utf-8',
+                       'Authorization': "Bearer {token}".format(token=jwt_token[0])}
+
+            # Create Observation
+            print("Creating Observation")
+            obs = {"Datastream": {"@iot.id": datastream_id},
+                   "phenomenonTime": phenomenon_time,
+                   "result": result}
+            obs_json = json.dumps(obs)
+            print(obs_json)
+            r = session.post(self.baseurl + "/Observations", headers=headers, data=obs_json, verify=self.VERIFY_SSL)
+            print(r.status_code)
+            print(r.text)
+            dsstr = r.headers["Location"]
+            dsstrid = dsstr[dsstr.find("(") + 1:dsstr.find(")")]
+            print(dsstr, dsstrid)
+            return dsstrid
         except:
             return 'Error'
 
@@ -476,6 +529,10 @@ class LearnSTAClient:
         dfthings['jwt_key'] = dfthings.apply(self.Getuuid, axis=1)
 #         dfthings['stalocationid'] = dfthings.apply(self.Getuuid, axis=1)
         dfthings.to_csv(outputthingsfilepath,index=False)
+
+    def update_things_locations(self, output_things_filepath, location_id):
+        dfthings = pd.read_csv(output_things_filepath, encoding=DEFAULT_ENCODING)
+        dfthings['stathingid'].apply(self.update_thing_location, args=(location_id,));
 
     def createthings_dev(self, inputthingsfilepath, location_id):
         dfthings = pd.read_csv(inputthingsfilepath)
