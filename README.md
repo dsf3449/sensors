@@ -1,6 +1,4 @@
-# Firmware for Raspberry Pi sensors used in [Lafayette Engagement and
-  Research Network](https://learnlafayette.com/) air quality sensor
-  network.
+# Firmware for Raspberry Pi sensors used in [Lafayette Engagement and Research Network](https://learnlafayette.com/) air quality sensor network.
 
 Uses a simple and flexible YAML-based configuration to give each
 sensor its own personality, regardless of the sensors installed.  This
