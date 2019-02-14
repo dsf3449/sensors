@@ -42,4 +42,11 @@ transports:
       verify_ssl: false
 ```
 
+## Architecture
+
+The sensor firmware uses a de-coupled/distributed architecture to
+ensure reliable: sensing, data storage, and data transmission.  This
+architecture is summarized in the image below.
+
+![LEaRN: Raspberry Pi data logger firmware architecture](docs/LEaRN-DataloggerArchitecture.png)
 
