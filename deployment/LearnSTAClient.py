@@ -269,6 +269,31 @@ class LearnSTAClient:
             print ("error")
             return 'Error'
 
+    def create_location(self,row):
+        session = requests.session()
+        try:
+            # Get Token
+            jwt_token = self.jwt_authenticate()
+            print (jwt_token)
+            headers = {'Content-Type': 'application/json','Authorization': "Bearer {token}".format(token=jwt_token[0])}
+
+            # Create Location
+            print ("Creating Location")
+            thingjson =json.dumps(self.createlocation(row['name'], row['description'], row['latitude'], row['longitude']),
+                                  ensure_ascii=False).encode('utf8')
+            r = session.post(self.baseurl+"/Locations", headers=headers, data=thingjson, verify=self.VERIFY_SSL)
+            print(r.status_code)
+            print(r.text)
+            print (" Printing thing headers ")
+            print (r.headers)
+            loc_str = r.headers["Location"]
+            loc_id = loc_str[loc_str.find("(")+1:loc_str.find(")")]
+            return loc_id
+        except:
+            raise
+            print ("error")
+            return 'Error'
+
     def update_thing_location(self, thing_id, location_id):
         session = requests.session()
         try:
@@ -293,6 +318,53 @@ class LearnSTAClient:
         except:
             raise
             print ("error")
+            return 'Error'
+
+    def deploy_thing(self, row):
+        session = requests.session()
+        try:
+            # Get Token
+            jwt_token = self.jwt_authenticate()
+            print(jwt_token)
+            headers = {'Content-Type': 'application/json', 'Authorization': "Bearer {token}".format(token=jwt_token[0])}
+
+            # Get existing Thing
+            thing_id = row['stathing_id'].replace("'", "")
+            url = self.baseurl + "/Things('{0}')".format(thing_id)
+            print("URL: {0}".format(url))
+            r = session.get(url, headers=headers, verify=self.VERIFY_SSL)
+            print(r.text)
+            t = r.json()
+
+            # Get new Location
+            url = self.baseurl + "/Locations('{0}')".format(row['new_location_id'].replace("'", ""))
+            print("URL: {0}".format(url))
+            r = session.get(url, headers=headers, verify=self.VERIFY_SSL)
+            print(r.text)
+            l = r.json()
+
+            # Update Thing
+            original_thing_name = t['name']
+            new_t = {'properties': t['properties']}
+            new_t['name'] = l['name']
+            new_t['description'] = l['description']
+            new_t['properties']['original_thing_name'] = original_thing_name
+            new_l = {}
+            new_l['@iot.id'] = row['new_location_id']
+            new_t['Locations'] = [new_l]
+            print(new_t)
+            # Do the update via PATCH
+            patch_json = json.dumps(new_t, ensure_ascii=False).encode('utf8')
+            url = self.baseurl + "/Things('{0}')".format(thing_id)
+            print("URL: {0}".format(url))
+            r = session.patch(url, headers=headers, data=patch_json, verify=self.VERIFY_SSL)
+            print(r.status_code)
+            print(r.text)
+            print(" Printing thing headers ")
+            print(r.headers)
+        except:
+            raise
+            print("error")
             return 'Error'
 
     def createsensorthing_dev(self,row, location_id):
@@ -521,7 +593,16 @@ class LearnSTAClient:
 
     def Getuuid(self,row):
         return uuid.uuid4()
-        
+
+    def deploy_things(self, input_deploy_filepath):
+        df_locs = pd.read_csv(input_deploy_filepath)
+        df_locs.apply(self.deploy_thing, axis=1)
+
+    def create_locations(self, input_locations_filepath, out_locations_filepath):
+        df_locs = pd.read_csv(input_locations_filepath)
+        df_locs['stalocationid'] = df_locs.apply(self.create_location, axis=1)
+        df_locs.to_csv(out_locations_filepath, index=False)
+
     def createthings(self,inputthingsfilepath,outputthingsfilepath):
         dfthings=pd.read_csv(inputthingsfilepath)
         dfthings['stathingid'] =dfthings.apply(self.createsensorthing, axis=1)
