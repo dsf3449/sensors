@@ -333,14 +333,15 @@ class LearnSTAClient:
             url = self.baseurl + "/Things('{0}')".format(thing_id)
             print("URL: {0}".format(url))
             r = session.get(url, headers=headers, verify=self.VERIFY_SSL)
-            print(r.text)
+            # print(r.text)
             t = r.json()
 
             # Get new Location
-            url = self.baseurl + "/Locations('{0}')".format(row['new_location_id'].replace("'", ""))
+            new_location_id = row['new_location_id'].replace("'", "")
+            url = self.baseurl + "/Locations('{0}')".format(new_location_id)
             print("URL: {0}".format(url))
             r = session.get(url, headers=headers, verify=self.VERIFY_SSL)
-            print(r.text)
+            # print(r.text)
             l = r.json()
 
             # Update Thing
@@ -350,18 +351,19 @@ class LearnSTAClient:
             new_t['description'] = l['description']
             new_t['properties']['original_thing_name'] = original_thing_name
             new_l = {}
-            new_l['@iot.id'] = row['new_location_id']
+            new_l['@iot.id'] = new_location_id
             new_t['Locations'] = [new_l]
+            print("PATCHing Thing with data...")
             print(new_t)
             # Do the update via PATCH
             patch_json = json.dumps(new_t, ensure_ascii=False).encode('utf8')
             url = self.baseurl + "/Things('{0}')".format(thing_id)
             print("URL: {0}".format(url))
             r = session.patch(url, headers=headers, data=patch_json, verify=self.VERIFY_SSL)
-            print(r.status_code)
-            print(r.text)
-            print(" Printing thing headers ")
-            print(r.headers)
+            print("PATCH status code was: " + str(r.status_code))
+            # print(r.text)
+            # print(" Printing thing headers ")
+            # print(r.headers)
         except:
             raise
             print("error")
