@@ -269,7 +269,7 @@ class LearnSTAClient:
             print ("error")
             return 'Error'
 
-    def create_location(self,row):
+    def create_location(self, row):
         session = requests.session()
         try:
             # Get Token
@@ -292,6 +292,56 @@ class LearnSTAClient:
         except:
             raise
             print ("error")
+            return 'Error'
+
+    def update_location(self, row, dry_run=False):
+        location_id = row['stalocationid'].replace("'", "")
+        patch_location = {'name': row['new_name'],
+                          'description': row['new_description']}
+        print("PATCHing Location with ID {0} and payload: {1}".format(location_id,
+                                                                      patch_location))
+        self.patch_entity('Locations', location_id, patch_location, dry_run=dry_run)
+
+    def get_related(self, related_url, absolute_url=False):
+        session = requests.session()
+        url = None
+        if absolute_url:
+            url = related_url
+        else:
+            url = self.baseurl + '/' + related_url
+        print("URL: {0}".format(url))
+        try:
+            r = session.get(url, verify=self.VERIFY_SSL)
+            print(r.text)
+            return r.json()['value']
+        except:
+            raise
+            print("error")
+            return 'Error'
+
+    def patch_entity(self, entity_type, entity_id, data, dry_run=False):
+        e_id = entity_id.replace("'", "")
+        data_str = json.dumps(data, ensure_ascii=False).encode('utf8')
+        session = requests.session()
+        try:
+            # Get Token
+            jwt_token = self.jwt_authenticate()
+            print(jwt_token)
+            headers = {'Content-Type': 'application/json', 'Authorization': "Bearer {token}".format(token=jwt_token[0])}
+
+            # Update Entity
+            print("PATCHing entity type {0} with ID {1} and payload: {2}".format(entity_type,
+                                                                                 e_id,
+                                                                                 data_str))
+            url = self.baseurl + "/{0}('{1}')".format(entity_type, e_id)
+            print("URL: {0}".format(url))
+            if not dry_run:
+                r = session.patch(url, headers=headers, data=data_str, verify=self.VERIFY_SSL)
+                print(r.status_code)
+                print("PATCH status code was: " + str(r.status_code))
+        except:
+            raise
+            print("error")
             return 'Error'
 
     def update_thing_location(self, thing_id, location_id):
@@ -320,7 +370,11 @@ class LearnSTAClient:
             print ("error")
             return 'Error'
 
-    def deploy_thing(self, row):
+    def deploy_thing(self, row, related_urls_absolute=False, dry_run=False):
+        if dry_run:
+            print("Deploying Thing [DRY RUN]")
+        else:
+            print("Deploying Thing")
         session = requests.session()
         try:
             # Get Token
@@ -333,7 +387,7 @@ class LearnSTAClient:
             url = self.baseurl + "/Things('{0}')".format(thing_id)
             print("URL: {0}".format(url))
             r = session.get(url, headers=headers, verify=self.VERIFY_SSL)
-            # print(r.text)
+            print(r.text)
             t = r.json()
 
             # Get new Location
@@ -349,7 +403,7 @@ class LearnSTAClient:
             new_t = {'properties': t['properties']}
             new_t['name'] = l['name']
             new_t['description'] = l['description']
-            new_t['properties']['original_thing_name'] = original_thing_name
+            new_t['properties']['original_name'] = original_thing_name
             new_l = {}
             new_l['@iot.id'] = new_location_id
             new_t['Locations'] = [new_l]
@@ -359,11 +413,32 @@ class LearnSTAClient:
             patch_json = json.dumps(new_t, ensure_ascii=False).encode('utf8')
             url = self.baseurl + "/Things('{0}')".format(thing_id)
             print("URL: {0}".format(url))
-            r = session.patch(url, headers=headers, data=patch_json, verify=self.VERIFY_SSL)
-            print("PATCH status code was: " + str(r.status_code))
-            # print(r.text)
-            # print(" Printing thing headers ")
-            # print(r.headers)
+            if not dry_run:
+                r = session.patch(url, headers=headers, data=patch_json, verify=self.VERIFY_SSL)
+                print("PATCH status code was: " + str(r.status_code))
+
+            # Get Datastreams for Thing, renaming each Datastream as needed
+            datastreams = self.get_related(t['Datastreams@iot.navigationLink'],
+                                           absolute_url=related_urls_absolute)
+            # Rename all Datastreams whose name begins with the current name of the Thing
+            t_name = t['name']
+            for d in datastreams:
+                if d['name'].startswith(t_name):
+                    new_ds_name = d['name'].replace(t_name, new_t['name'])
+                    patch_ds = {'name': new_ds_name}
+                    self.patch_entity('Datastreams', d['@iot.id'], patch_ds, dry_run=dry_run)
+
+            # Get MultiDatastreams for Thing, renaming each MultiDatastream as needed
+            multi_datastreams = self.get_related(t['MultiDatastreams@iot.navigationLink'],
+                                                 absolute_url=related_urls_absolute)
+            # Rename all MultiDatastreams whose name begins with the current name of the Thing
+            t_name = t['name']
+            for d in multi_datastreams:
+                if d['name'].startswith(t_name):
+                    new_ds_name = d['name'].replace(t_name, new_t['name'])
+                    patch_ds = {'name': new_ds_name}
+                    self.patch_entity('MultiDatastreams', d['@iot.id'], patch_ds, dry_run=dry_run)
+
         except:
             raise
             print("error")
@@ -596,14 +671,19 @@ class LearnSTAClient:
     def Getuuid(self,row):
         return uuid.uuid4()
 
-    def deploy_things(self, input_deploy_filepath):
+    def deploy_things(self, input_deploy_filepath, related_urls_absolute=False, dry_run=False):
         df_locs = pd.read_csv(input_deploy_filepath)
-        df_locs.apply(self.deploy_thing, axis=1)
+        df_locs.apply(self.deploy_thing, axis='columns',
+                      related_urls_absolute=related_urls_absolute, dry_run=dry_run)
 
     def create_locations(self, input_locations_filepath, out_locations_filepath):
         df_locs = pd.read_csv(input_locations_filepath)
         df_locs['stalocationid'] = df_locs.apply(self.create_location, axis=1)
         df_locs.to_csv(out_locations_filepath, index=False)
+
+    def update_locations(self, input_locations_update_filepath, dry_run=False):
+        df_locs_upd = pd.read_csv(input_locations_update_filepath)
+        df_locs_upd.apply(self.update_location, axis=1, dry_run=dry_run)
 
     def createthings(self,inputthingsfilepath,outputthingsfilepath):
         dfthings=pd.read_csv(inputthingsfilepath)
