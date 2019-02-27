@@ -302,6 +302,17 @@ class LearnSTAClient:
                                                                       patch_location))
         self.patch_entity('Locations', location_id, patch_location, dry_run=dry_run)
 
+    def update_location_location(self, row, dry_run=False):
+        location_id = row['stalocationid'].replace("'", "")
+        patch_location = {"location": {"type": "Feature",
+                          "geometry": {
+                            "type": "Point",
+                            "coordinates": [row['longitude'], row['latitude']]
+                          }}}
+        print("PATCHing Location with ID {0} and payload: {1}".format(location_id,
+                                                                      patch_location))
+        self.patch_entity('Locations', location_id, patch_location, dry_run=dry_run)
+
     def get_related(self, related_url, absolute_url=False):
         session = requests.session()
         url = None
@@ -685,6 +696,10 @@ class LearnSTAClient:
         df_locs_upd = pd.read_csv(input_locations_update_filepath)
         df_locs_upd.apply(self.update_location, axis=1, dry_run=dry_run)
 
+    def update_locations_location(self, input_locations_update_filepath, dry_run=False):
+        df_locs_upd = pd.read_csv(input_locations_update_filepath)
+        df_locs_upd.apply(self.update_location_location, axis=1, dry_run=dry_run)
+
     def createthings(self,inputthingsfilepath,outputthingsfilepath):
         dfthings=pd.read_csv(inputthingsfilepath)
         dfthings['stathingid'] =dfthings.apply(self.createsensorthing, axis=1)
@@ -695,7 +710,7 @@ class LearnSTAClient:
 
     def update_things_locations(self, output_things_filepath, location_id):
         dfthings = pd.read_csv(output_things_filepath, encoding=DEFAULT_ENCODING)
-        dfthings['stathingid'].apply(self.update_thing_location, args=(location_id,));
+        dfthings['stathingid'].apply(self.update_thing_location, args=(location_id,))
 
     def createthings_dev(self, inputthingsfilepath, location_id):
         dfthings = pd.read_csv(inputthingsfilepath)
