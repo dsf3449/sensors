@@ -381,6 +381,32 @@ class LearnSTAClient:
             print ("error")
             return 'Error'
 
+    def get_token(self):
+        jwt_token = self.jwt_authenticate()
+        print(jwt_token)
+
+    def rename_thing(self, thing_id, new_name, dry_run=False):
+        session = requests.session()
+        try:
+            # Get Token
+            jwt_token = self.jwt_authenticate()
+            print(jwt_token)
+            headers = {'Content-Type': 'application/json', 'Authorization': "Bearer {token}".format(token=jwt_token[0])}
+
+            print("Renaming Thing '{0}' to '{1}".format(thing_id, new_name))
+            t = {'name': new_name}
+            # Do the update via PATCH
+            patch_json = json.dumps(t, ensure_ascii=False).encode('utf8')
+            url = self.baseurl + "/Things('{0}')".format(thing_id)
+            print("URL: {0}".format(url))
+            if not dry_run:
+                r = session.patch(url, headers=headers, data=patch_json, verify=self.VERIFY_SSL)
+                print("PATCH status code was: " + str(r.status_code))
+        except:
+            raise
+            print("error")
+            return 'Error'
+
     def deploy_thing(self, row, related_urls_absolute=False, dry_run=False):
         if dry_run:
             print("Deploying Thing [DRY RUN]")
@@ -411,7 +437,12 @@ class LearnSTAClient:
 
             # Update Thing
             original_thing_name = t['name']
-            new_t = {'properties': t['properties']}
+            properties = None
+            if row['new_thing_properties'] is not None and row['new_thing_properties'] != '':
+                properties = json.loads(row['new_thing_properties'])
+            else:
+                properties = t['properties']
+            new_t = {'properties': properties}
             new_t['name'] = l['name']
             new_t['description'] = l['description']
             new_t['properties']['original_name'] = original_thing_name
