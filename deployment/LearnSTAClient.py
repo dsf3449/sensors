@@ -512,7 +512,41 @@ class LearnSTAClient:
             raise
             print ("error")
             return 'Error'
-        
+
+    def fix_thing_nested_properties(self, id, dry_run=False):
+        session = requests.session()
+        try:
+            # Get Token
+            jwt_token = self.jwt_authenticate()
+            print(jwt_token)
+            headers = {'Content-Type': 'application/json; charset=utf-8',
+                       'Authorization': "Bearer {token}".format(token=jwt_token[0])}
+
+            # Get the Thing
+            thing_id = id.replace("'", "")
+            url = self.baseurl + "/Things('{0}')".format(thing_id)
+            print("URL: {0}".format(url))
+            r = session.get(url, headers=headers, verify=self.VERIFY_SSL)
+            print(r.text)
+            t = r.json()
+
+            # Look for nested properties
+            if 'properties' in t:
+                p = t['properties']
+                if 'properties' in p:
+                    # There are nested properties, fix them
+                    data_str = json.dumps({'properties': p['properties']}, ensure_ascii=False).encode('utf8')
+                    print("Updated Thing contents: {0}".format(data_str))
+                    if not dry_run:
+                        r = session.patch(url, headers=headers, data=data_str, verify=self.VERIFY_SSL)
+                        print("PATCH status code was: " + str(r.status_code))
+                        print(r.status_code)
+                        print(r.text)
+        except:
+            raise
+            print ("error")
+            return 'Error'
+
     def createdatastream(self,row):
         session = requests.session()
         try:
