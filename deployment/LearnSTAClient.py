@@ -65,6 +65,9 @@ class LearnSTAClient:
             json = AUTH_TEMPLATE.format(id=JWT_ID, key=JWT_KEY)
             headers = {'Content-Type': 'application/json'}
             try:
+                print("Auth URL: {0}".format(URL_AUTH))
+                print("Headers: {0}".format(headers))
+                print("Data: {0}".format(json))
                 r = session.post(URL_AUTH, headers=headers, data=json, verify=VERIFY_SSL)
             except ConnectionError as e:
                 print ("Unable to authenticate to {0} due to error: {1}".format(URL_AUTH, str(e)))
@@ -398,6 +401,28 @@ class LearnSTAClient:
             # Do the update via PATCH
             patch_json = json.dumps(t, ensure_ascii=False).encode('utf8')
             url = self.baseurl + "/Things('{0}')".format(thing_id)
+            print("URL: {0}".format(url))
+            if not dry_run:
+                r = session.patch(url, headers=headers, data=patch_json, verify=self.VERIFY_SSL)
+                print("PATCH status code was: " + str(r.status_code))
+        except:
+            raise
+            print("error")
+            return 'Error'
+
+    def rename_multidatastream(self, id, new_name, dry_run=False):
+        session = requests.session()
+        try:
+            # Get Token
+            jwt_token = self.jwt_authenticate()
+            print(jwt_token)
+            headers = {'Content-Type': 'application/json', 'Authorization': "Bearer {token}".format(token=jwt_token[0])}
+
+            print("Renaming MultiDatastream '{0}' to '{1}".format(id, new_name))
+            t = {'name': new_name}
+            # Do the update via PATCH
+            patch_json = json.dumps(t, ensure_ascii=False).encode('utf8')
+            url = self.baseurl + "/MultiDatastreams('{0}')".format(id)
             print("URL: {0}".format(url))
             if not dry_run:
                 r = session.patch(url, headers=headers, data=patch_json, verify=self.VERIFY_SSL)
