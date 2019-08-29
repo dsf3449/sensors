@@ -791,7 +791,8 @@ class LearnSTAClient:
         df_locs_upd.apply(self.update_location_location, axis=1, dry_run=dry_run)
 
     def createthings(self,inputthingsfilepath,outputthingsfilepath):
-        dfthings=pd.read_csv(inputthingsfilepath)
+        dfthings = pd.read_csv(inputthingsfilepath)
+        dfthings.dropna(how="all", inplace=True)
         dfthings['stathingid'] =dfthings.apply(self.createsensorthing, axis=1)
         dfthings['jwt_id'] = dfthings.apply(self.Getuuid, axis=1)
         dfthings['jwt_key'] = dfthings.apply(self.Getuuid, axis=1)
@@ -800,16 +801,20 @@ class LearnSTAClient:
 
     def update_things_locations(self, output_things_filepath, location_id):
         dfthings = pd.read_csv(output_things_filepath, encoding=DEFAULT_ENCODING)
+        dfthings.dropna(how="all", inplace=True)
         dfthings['stathingid'].apply(self.update_thing_location, args=(location_id,))
 
     def createthings_dev(self, inputthingsfilepath, location_id):
         dfthings = pd.read_csv(inputthingsfilepath)
+        dfthings.dropna(how="all", inplace=True)
         row = dfthings.iloc[0]
         return self.createsensorthing_dev(row, location_id)
         
     def createdatastreams(self,inputdatastreamsfilepath,outputdatastreamsfilepath,inputthingsfilepath):
         dfthings=pd.read_csv(inputthingsfilepath)
+        dfthings.dropna(how="all", inplace=True)
         dfdatastreams=pd.read_csv(inputdatastreamsfilepath, encoding=DEFAULT_ENCODING)
+        dfdatastreams.dropna(how="all", inplace=True)
         dfdatastreams=dfdatastreams.merge(dfthings,on='devicenum', how='left')
         dfdatastreams['stadatastreamid'] = dfdatastreams.apply(self.createdatastream, axis=1)
         dfdatastreams['QAQC_stadatastreamid'] = dfdatastreams.apply(self.createdatastreamQAQC, axis=1)
@@ -818,6 +823,7 @@ class LearnSTAClient:
 
     def createdatastreams_dev(self,inputdatastreamsfilepath, thing_id, sensor_id, obs_prop_id):
         dfdatastreams=pd.read_csv(inputdatastreamsfilepath, encoding=DEFAULT_ENCODING)
+        dfdatastreams.dropna(how="all", inplace=True)
         row = dfdatastreams.iloc[0]
         return self.createdatastream_dev(row, thing_id, sensor_id, obs_prop_id)
 
@@ -825,8 +831,11 @@ class LearnSTAClient:
                                 input_mds_datastreams_filepath,
                                 input_things_filepath):
         df_things = pd.read_csv(input_things_filepath, encoding=DEFAULT_ENCODING)
+        df_things.dropna(how="all", inplace=True)
         df_multidatastreams = pd.read_csv(input_mds_filepath, encoding=DEFAULT_ENCODING)
+        df_multidatastreams.dropna(how="all", inplace=True)
         df_multidatastreams_datastreams = pd.read_csv(input_mds_datastreams_filepath, encoding=DEFAULT_ENCODING)
+        df_multidatastreams_datastreams.dropna(how="all", inplace=True)
         df_multidatastreams = df_multidatastreams.merge(df_things, on='devicenum', how='left')
         df_multidatastreams['stamultidatastreamid'] = df_multidatastreams.apply(self.do_create_multidatastream, axis=1,
                                                                                 args=(df_multidatastreams_datastreams,))
