@@ -369,9 +369,10 @@ class LearnSTAClient:
             # Update Thing Location
             print ("Updating Thing {0} to Location {1}".format(thing_id, location_id))
             location = {}
-            location['@iot.id'] = location_id
+            location['@iot.id'] = location_id.replace("'", "")
             patch = {'Locations': [location]}
             patch_json = json.dumps(patch, ensure_ascii=False).encode('utf8')
+            print("\tpatch_json: {0}".format(patch_json))
             url = self.baseurl+"/Things('{0}')".format(thing_id.replace("'", ""))
             print("URL: {0}".format(url))
             r = session.patch(url, headers=headers, data=patch_json, verify=self.VERIFY_SSL)
@@ -803,6 +804,16 @@ class LearnSTAClient:
         dfthings = pd.read_csv(output_things_filepath, encoding=DEFAULT_ENCODING)
         dfthings.dropna(how="all", inplace=True)
         dfthings['stathingid'].apply(self.update_thing_location, args=(location_id,))
+
+    def move_things(self, things_out, locations_out):
+        things = pd.read_csv(things_out, encoding=DEFAULT_ENCODING)
+        things.dropna(how="all", inplace=True)
+        locations = pd.read_csv(locations_out, encoding=DEFAULT_ENCODING)
+        locations.dropna(how="all", inplace=True)
+        for i, thing_id in enumerate(things['stathingid']):
+            location_id = locations['stalocationid'].iloc[i]
+            print("Updating location of Thing: {0} to {1}".format(thing_id, location_id))
+            self.update_thing_location(thing_id, location_id)
 
     def createthings_dev(self, inputthingsfilepath, location_id):
         dfthings = pd.read_csv(inputthingsfilepath)
