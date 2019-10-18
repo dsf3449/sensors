@@ -464,7 +464,7 @@ class LearnSTAClient:
             # Update Thing
             original_thing_name = t['name']
             properties = None
-            if row['new_thing_properties'] is not None and row['new_thing_properties'] != '':
+            if 'new_thing_properties' in row and row['new_thing_properties'] != '':
                 properties = json.loads(row['new_thing_properties'])
             else:
                 properties = t['properties']
