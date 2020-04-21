@@ -30,10 +30,18 @@ def main():
 
     while True:
         try:
+            # Get the transmit interval from the env var set by balenaCloud
+            transmit_interval = os.environ.get('TRANSMIT_INTERVAL')
+            if transmit_interval is None:
+                logger.info("Transmitter: TRANSMIT_INTERVAL is not defined. We will default to 15 seconds unless this is set.")
+                transmit_interval = 15
+            else:
+                transmit_interval = float(transmit_interval)
+
             transports = config[CFG_TRANSPORTS]
             logger.debug("Transmitter: scheduling network transmissions for {0} transports...".format(len(transports)))
             for t in transports:
-                s.enter(t.transmit_interval_seconds(),
+                s.enter(transmit_interval,
                         SCHEDULE_PRIORITY_DEFAULT,
                         t.transmit,
                         argument=(repo,))

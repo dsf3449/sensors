@@ -48,7 +48,7 @@ def sample():
         # Get the schedule interval from the env var set by balenaCloud
         sample_interval = os.environ.get('SAMPLE_INTERVAL')
         if sample_interval is None:
-            logger.info("SAMPLE_INTERVAL is not defined. We will default to 1 minute unless this is set.")
+            logger.info("Raspberry Pi Sampler: SAMPLE_INTERVAL is not defined. We will default to 1 minute unless this is set.")
             sample_interval = 60
         else:
             sample_interval = float(sample_interval)

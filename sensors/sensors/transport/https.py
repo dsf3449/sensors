@@ -61,8 +61,39 @@ class HttpsTransport(Transport):
         if len(obs) > 0:
             # Serialize observations to SensorThings dataArray JSON
             obs_dict = observations_list_to_dict(obs)
-            json = observations_to_json(obs_dict)
-            self.logger.debug("Transmitter: JSON payload: {0}".format(json))
+
+            sample_type = os.environ.get('SAMPLE_TYPE')
+            if sample_type == "AVERAGE":
+                original_json = observations_to_json(obs_dict)
+                # Get the multidatastream_id from the env var set by balenaCloud
+                multidatastream_id = os.environ.get('MULTIDATASTREAM_ID')
+                if multidatastream_id == "null":
+                    self.logger.info("Transmitter: MULTIDATASTREAM_ID is not defined. Sending RAW values instead.")
+                else:
+                    for datastream in obs_dict:
+                        try:
+                            datastream['MultiDatastream']
+                        except KeyError:
+                            continue
+                        if datastream['MultiDatastream']['@iot.id'] == multidatastream_id:
+                            self.logger.debug("Transmitter: found a matching multidatastream.")
+                            total_temp = 0
+                            total_humidity = 0
+                            for data in datastream['dataArray']:
+                                total_temp += data[1][0]
+                                total_humidity += data[1][1]
+                            avg_temp = round((total_temp / len(datastream['dataArray'])))
+                            avg_humidity = round((total_humidity / len(datastream['dataArray'])))
+
+                            # Rebuild the dataArray with only the avg values
+                            datastream['dataArray'] = [datastream['dataArray'][len(datastream['dataArray']) - 1][0], [avg_temp, avg_humidity], {}]
+                json = observations_to_json(obs_dict)
+                self.logger.debug("Transmitter: original JSON payload: {0}".format(original_json))
+                self.logger.debug("Transmitter: new avg JSON payload: {0}".format(json))
+            else:
+                json = observations_to_json(obs_dict)
+                self.logger.debug("Transmitter: JSON payload: {0}".format(json))
+
             # POST observations
             self._jwt_authenticate()
             url = self._join_path_to_url(self.url(), self.STA_POST_PATH)
