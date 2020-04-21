@@ -50,6 +50,8 @@ def sample():
         if sample_interval is None:
             logger.info("SAMPLE_INTERVAL is not defined. We will default to 1 minute unless this is set.")
             sample_interval = 60
+        else:
+            sample_interval = float(sample_interval)
 
         while True:
             # Schedule event to run a variable amount of time
