@@ -10,6 +10,8 @@ from sensors.config import get_config_element
 from sensors.transport import *
 from sensors.persistence.sqlite import SqliteRepository
 
+import os
+
 
 class HttpsTransport(Transport):
     """SensorThings API HTTPS transport with JWT authentication
