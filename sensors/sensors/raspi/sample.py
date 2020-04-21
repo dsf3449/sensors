@@ -45,11 +45,17 @@ def sample():
         logger.debug("About to start scheduler...")
         s = sched.scheduler(time.time, time.sleep)
 
+        # Get the schedule interval from the env var set by balenaCloud
+        sample_interval = os.environ.get('SAMPLE_INTERVAL')
+        if sample_interval is None:
+            logger.info("SAMPLE_INTERVAL is not defined. We will default to 1 minute unless this is set.")
+            sample_interval = 60
+
         while True:
-            # Schedule event to run every minute
+            # Schedule event to run a variable amount of time
             logger.debug("Raspberry Pi Sampler: scheduling observation sampling with delay of {0} seconds...".
-                         format(SAMPLE_INTERVAL_ONE_MINUTE))
-            s.enter(SAMPLE_INTERVAL_ONE_MINUTE,
+                         format(sample_interval))
+            s.enter(sample_interval,
                     SCHEDULE_PRIORITY_DEFAULT,
                     generate_observations_minute,
                     argument=(q,))
