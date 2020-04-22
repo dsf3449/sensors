@@ -114,9 +114,8 @@ class HttpsTransport(Transport):
                                 }
                                 new_list.append(new_datastream)
 
-                    rebuilt_json = json.dumps(new_list)
                     self.logger.debug("Transmitter: original JSON payload: {0}".format(converted_json))
-                    self.logger.debug("Transmitter: new avg JSON payload: {0}".format(rebuilt_json))
+                    self.logger.debug("Transmitter: new avg JSON payload: {0}".format(new_list))
             else:
                 self.logger.debug("Transmitter: JSON payload: {0}".format(converted_json))
 
@@ -128,7 +127,7 @@ class HttpsTransport(Transport):
             self.logger.debug("Transmitter: Posting data to {0}...".format(url))
             try:
                 if sample_type == "AVERAGE":
-                    r = self.session.post(url, headers=headers, data=rebuilt_json, verify=self.verify_ssl())
+                    r = self.session.post(url, headers=headers, data=new_list, verify=self.verify_ssl())
                 else:
                     r = self.session.post(url, headers=headers, data=converted_json, verify=self.verify_ssl())
             except ConnectionError as e:
