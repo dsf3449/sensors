@@ -93,6 +93,7 @@ class HttpsTransport(Transport):
 
                             # Rebuild the dataArray with only the avg values
                             datastream['dataArray'] = [datastream['dataArray'][len(datastream['dataArray']) - 1][0], [avg_temp, avg_humidity], {}]
+                            datastream['dataArray@iot.count'] = 1
 
                     rebuilt_json = json.dumps(formatted_dict)
                     self.logger.debug("Transmitter: original JSON payload: {0}".format(converted_json))
