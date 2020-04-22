@@ -71,7 +71,6 @@ class HttpsTransport(Transport):
                 original_json = observations_to_json(obs_dict)
                 formatted_dict = json.loads(original_json)
 
-                new_list = []
                 # Get the multidatastream_id from the env var set by balenaCloud
                 multidatastream_id = os.environ.get('MULTIDATASTREAM_ID')
                 if multidatastream_id == "null":
@@ -81,7 +80,7 @@ class HttpsTransport(Transport):
                         try:
                             datastream['MultiDatastream']
                         except KeyError:
-                            new_list.append(datastream)
+                            continue
                         else:
                             if datastream['MultiDatastream']['@iot.id'] == multidatastream_id:
                                 self.logger.debug("Transmitter: found a matching multidatastream.")
@@ -93,29 +92,13 @@ class HttpsTransport(Transport):
                                 avg_temp = round((total_temp / len(datastream['dataArray'])))
                                 avg_humidity = round((total_humidity / len(datastream['dataArray'])))
 
-                                new_datastream = {
-                                    "MultiDatastream": {
-                                        "@iot.id": multidatastream_id
-                                    },
-                                    "components": [
-                                        "phenomenonTime",
-                                        "result",
-                                        "parameters"
-                                    ],
-                                    "dataArray@iot.count": 1,
-                                    "dataArray": [
-                                        datastream['dataArray'][len(datastream['dataArray']) - 1][0],
-                                        [
-                                            avg_temp,
-                                            avg_humidity
-                                        ],
-                                        {}
-                                    ]
-                                }
-                                new_list.append(new_datastream)
+                                # Rebuild the dataArray with only the avg values
+                                datastream['dataArray'] = [[datastream['dataArray'][len(datastream['dataArray']) - 1][0], [avg_temp, avg_humidity], {}]]
+                                datastream['dataArray@iot.count'] = 1
 
+                    rebuilt_json = json.dumps(formatted_dict)
                     self.logger.debug("Transmitter: original JSON payload: {0}".format(converted_json))
-                    self.logger.debug("Transmitter: new avg JSON payload: {0}".format(new_list))
+                    self.logger.debug("Transmitter: new avg JSON payload: {0}".format(rebuilt_json))
             else:
                 self.logger.debug("Transmitter: JSON payload: {0}".format(converted_json))
 
@@ -127,7 +110,7 @@ class HttpsTransport(Transport):
             self.logger.debug("Transmitter: Posting data to {0}...".format(url))
             try:
                 if sample_type == "AVERAGE":
-                    r = self.session.post(url, headers=headers, data=new_list, verify=self.verify_ssl())
+                    r = self.session.post(url, headers=headers, data=rebuilt_json, verify=self.verify_ssl())
                 else:
                     r = self.session.post(url, headers=headers, data=converted_json, verify=self.verify_ssl())
             except ConnectionError as e:
