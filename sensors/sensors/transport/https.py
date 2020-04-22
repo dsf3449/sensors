@@ -82,40 +82,41 @@ class HttpsTransport(Transport):
                             datastream['MultiDatastream']
                         except KeyError:
                             new_list.append(datastream)
-                        if datastream['MultiDatastream']['@iot.id'] == multidatastream_id:
-                            self.logger.debug("Transmitter: found a matching multidatastream.")
-                            total_temp = 0
-                            total_humidity = 0
-                            for data in datastream['dataArray']:
-                                total_temp += data[1][0]
-                                total_humidity += data[1][1]
-                            avg_temp = round((total_temp / len(datastream['dataArray'])))
-                            avg_humidity = round((total_humidity / len(datastream['dataArray'])))
+                        else:
+                            if datastream['MultiDatastream']['@iot.id'] == multidatastream_id:
+                                self.logger.debug("Transmitter: found a matching multidatastream.")
+                                total_temp = 0
+                                total_humidity = 0
+                                for data in datastream['dataArray']:
+                                    total_temp += data[1][0]
+                                    total_humidity += data[1][1]
+                                avg_temp = round((total_temp / len(datastream['dataArray'])))
+                                avg_humidity = round((total_humidity / len(datastream['dataArray'])))
 
-                            # Rebuild the dataArray with only the avg values
-                            datastream['dataArray'] = [datastream['dataArray'][len(datastream['dataArray']) - 1][0], [avg_temp, avg_humidity], {}]
-                            datastream['dataArray@iot.count'] = 1
+                                # Rebuild the dataArray with only the avg values
+                                datastream['dataArray'] = [datastream['dataArray'][len(datastream['dataArray']) - 1][0], [avg_temp, avg_humidity], {}]
+                                datastream['dataArray@iot.count'] = 1
 
-                            new_datastream = {
-                                "MultiDatastream": {
-                                    "@iot.id": multidatastream_id
-                                },
-                                "components": [
-                                    "phenomenonTime",
-                                    "result",
-                                    "parameters"
-                                ],
-                                "dataArray@iot.count": 1,
-                                "dataArray": [
-                                    datastream['dataArray'][len(datastream['dataArray']) - 1][0],
-                                    [
-                                        avg_temp,
-                                        avg_humidity
+                                new_datastream = {
+                                    "MultiDatastream": {
+                                        "@iot.id": multidatastream_id
+                                    },
+                                    "components": [
+                                        "phenomenonTime",
+                                        "result",
+                                        "parameters"
                                     ],
-                                    {}
-                                ]
-                            }
-                            new_list.append(new_datastream)
+                                    "dataArray@iot.count": 1,
+                                    "dataArray": [
+                                        datastream['dataArray'][len(datastream['dataArray']) - 1][0],
+                                        [
+                                            avg_temp,
+                                            avg_humidity
+                                        ],
+                                        {}
+                                    ]
+                                }
+                                new_list.append(new_datastream)
 
                     rebuilt_json = json.dumps(new_list)
                     self.logger.debug("Transmitter: original JSON payload: {0}".format(converted_json))
