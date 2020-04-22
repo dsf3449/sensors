@@ -93,10 +93,6 @@ class HttpsTransport(Transport):
                                 avg_temp = round((total_temp / len(datastream['dataArray'])))
                                 avg_humidity = round((total_humidity / len(datastream['dataArray'])))
 
-                                # Rebuild the dataArray with only the avg values
-                                datastream['dataArray'] = [datastream['dataArray'][len(datastream['dataArray']) - 1][0], [avg_temp, avg_humidity], {}]
-                                datastream['dataArray@iot.count'] = 1
-
                                 new_datastream = {
                                     "MultiDatastream": {
                                         "@iot.id": multidatastream_id
