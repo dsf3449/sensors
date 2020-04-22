@@ -71,6 +71,7 @@ class HttpsTransport(Transport):
                 original_json = observations_to_json(obs_dict)
                 formatted_dict = json.loads(original_json)
 
+                new_list = []
                 # Get the multidatastream_id from the env var set by balenaCloud
                 multidatastream_id = os.environ.get('MULTIDATASTREAM_ID')
                 if multidatastream_id == "null":
@@ -80,7 +81,7 @@ class HttpsTransport(Transport):
                         try:
                             datastream['MultiDatastream']
                         except KeyError:
-                            continue
+                            new_list.append(datastream)
                         if datastream['MultiDatastream']['@iot.id'] == multidatastream_id:
                             self.logger.debug("Transmitter: found a matching multidatastream.")
                             total_temp = 0
@@ -95,7 +96,28 @@ class HttpsTransport(Transport):
                             datastream['dataArray'] = [datastream['dataArray'][len(datastream['dataArray']) - 1][0], [avg_temp, avg_humidity], {}]
                             datastream['dataArray@iot.count'] = 1
 
-                    rebuilt_json = json.dumps(formatted_dict)
+                            new_datastream = {
+                                "MultiDatastream": {
+                                    "@iot.id": multidatastream_id
+                                },
+                                "components": [
+                                    "phenomenonTime",
+                                    "result",
+                                    "parameters"
+                                ],
+                                "dataArray@iot.count": 1,
+                                "dataArray": [
+                                    datastream['dataArray'][len(datastream['dataArray']) - 1][0],
+                                    [
+                                        avg_temp,
+                                        avg_humidity
+                                    ],
+                                    {}
+                                ]
+                            }
+                            new_list.append(new_datastream)
+
+                    rebuilt_json = json.dumps(new_list)
                     self.logger.debug("Transmitter: original JSON payload: {0}".format(converted_json))
                     self.logger.debug("Transmitter: new avg JSON payload: {0}".format(rebuilt_json))
             else:
