@@ -67,12 +67,14 @@ class HttpsTransport(Transport):
             sample_type = os.environ.get('SAMPLE_TYPE')
             if sample_type == "AVERAGE":
                 original_json = observations_to_json(obs_dict)
+                self.logger.debug("!!! OBS_DICT !!!\n" + str(obs_dict))
                 # Get the multidatastream_id from the env var set by balenaCloud
                 multidatastream_id = os.environ.get('MULTIDATASTREAM_ID')
                 if multidatastream_id == "null":
                     self.logger.info("Transmitter: MULTIDATASTREAM_ID is not defined. Sending RAW values instead.")
                 else:
                     for datastream in obs_dict:
+                        self.logger.debug("!!! DATASTREAM !!!\n" + str(datastream))
                         try:
                             datastream['MultiDatastream']
                         except KeyError:
