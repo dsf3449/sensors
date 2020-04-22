@@ -11,6 +11,7 @@ from sensors.transport import *
 from sensors.persistence.sqlite import SqliteRepository
 
 import os
+import json
 
 
 class HttpsTransport(Transport):
@@ -63,18 +64,19 @@ class HttpsTransport(Transport):
         if len(obs) > 0:
             # Serialize observations to SensorThings dataArray JSON
             obs_dict = observations_list_to_dict(obs)
+            converted_json = observations_to_json(obs_dict)
 
             sample_type = os.environ.get('SAMPLE_TYPE')
             if sample_type == "AVERAGE":
                 original_json = observations_to_json(obs_dict)
-                self.logger.debug("!!! OBS_DICT !!!\n" + str(obs_dict))
+                formatted_dict = json.loads(original_json)
+
                 # Get the multidatastream_id from the env var set by balenaCloud
                 multidatastream_id = os.environ.get('MULTIDATASTREAM_ID')
                 if multidatastream_id == "null":
                     self.logger.info("Transmitter: MULTIDATASTREAM_ID is not defined. Sending RAW values instead.")
                 else:
-                    for datastream in obs_dict:
-                        self.logger.debug("!!! DATASTREAM !!!\n" + str(datastream))
+                    for datastream in formatted_dict:
                         try:
                             datastream['MultiDatastream']
                         except KeyError:
@@ -91,12 +93,12 @@ class HttpsTransport(Transport):
 
                             # Rebuild the dataArray with only the avg values
                             datastream['dataArray'] = [datastream['dataArray'][len(datastream['dataArray']) - 1][0], [avg_temp, avg_humidity], {}]
-                json = observations_to_json(obs_dict)
-                self.logger.debug("Transmitter: original JSON payload: {0}".format(original_json))
-                self.logger.debug("Transmitter: new avg JSON payload: {0}".format(json))
+
+                    rebuilt_json = json.dumps(formatted_dict)
+                    self.logger.debug("Transmitter: original JSON payload: {0}".format(converted_json))
+                    self.logger.debug("Transmitter: new avg JSON payload: {0}".format(rebuilt_json))
             else:
-                json = observations_to_json(obs_dict)
-                self.logger.debug("Transmitter: JSON payload: {0}".format(json))
+                self.logger.debug("Transmitter: JSON payload: {0}".format(converted_json))
 
             # POST observations
             self._jwt_authenticate()
@@ -105,7 +107,10 @@ class HttpsTransport(Transport):
                        'Authorization': "Bearer {token}".format(token=self.jwt_token[0])}
             self.logger.debug("Transmitter: Posting data to {0}...".format(url))
             try:
-                r = self.session.post(url, headers=headers, data=json, verify=self.verify_ssl())
+                if sample_type == "AVERAGE":
+                    r = self.session.post(url, headers=headers, data=rebuilt_json, verify=self.verify_ssl())
+                else:
+                    r = self.session.post(url, headers=headers, data=converted_json, verify=self.verify_ssl())
             except ConnectionError as e:
                 raise TransmissionException("POST failed due to error: {0}".format(str(e)))
             self.logger.debug("Transmitter: Status code was {0}".format(r.status_code))
