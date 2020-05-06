@@ -10,6 +10,9 @@ from sensors.config import get_config_element
 from sensors.transport import *
 from sensors.persistence.sqlite import SqliteRepository
 
+import os
+import json
+
 
 class HttpsTransport(Transport):
     """SensorThings API HTTPS transport with JWT authentication
@@ -61,8 +64,44 @@ class HttpsTransport(Transport):
         if len(obs) > 0:
             # Serialize observations to SensorThings dataArray JSON
             obs_dict = observations_list_to_dict(obs)
-            json = observations_to_json(obs_dict)
-            self.logger.debug("Transmitter: JSON payload: {0}".format(json))
+            converted_json = observations_to_json(obs_dict)
+
+            sample_type = os.environ.get('SAMPLE_TYPE')
+            if sample_type == "AVERAGE":
+                original_json = observations_to_json(obs_dict)
+                formatted_dict = json.loads(original_json)
+
+                # Get the multidatastream_id from the env var set by balenaCloud
+                multidatastream_id = os.environ.get('MULTIDATASTREAM_ID')
+                if multidatastream_id == "null":
+                    self.logger.info("Transmitter: MULTIDATASTREAM_ID is not defined. Sending RAW values instead.")
+                else:
+                    for datastream in formatted_dict:
+                        try:
+                            datastream['MultiDatastream']
+                        except KeyError:
+                            continue
+                        else:
+                            if datastream['MultiDatastream']['@iot.id'] == multidatastream_id:
+                                self.logger.debug("Transmitter: found a matching multidatastream.")
+                                total_temp = 0
+                                total_humidity = 0
+                                for data in datastream['dataArray']:
+                                    total_temp += data[1][0]
+                                    total_humidity += data[1][1]
+                                avg_temp = round((total_temp / len(datastream['dataArray'])))
+                                avg_humidity = round((total_humidity / len(datastream['dataArray'])))
+
+                                # Rebuild the dataArray with only the avg values
+                                datastream['dataArray'] = [[datastream['dataArray'][len(datastream['dataArray']) - 1][0], [avg_temp, avg_humidity], {}]]
+                                datastream['dataArray@iot.count'] = 1
+
+                    rebuilt_json = json.dumps(formatted_dict)
+                    self.logger.debug("Transmitter: original JSON payload: {0}".format(converted_json))
+                    self.logger.debug("Transmitter: new avg JSON payload: {0}".format(rebuilt_json))
+            else:
+                self.logger.debug("Transmitter: JSON payload: {0}".format(converted_json))
+
             # POST observations
             self._jwt_authenticate()
             url = self._join_path_to_url(self.url(), self.STA_POST_PATH)
@@ -70,7 +109,10 @@ class HttpsTransport(Transport):
                        'Authorization': "Bearer {token}".format(token=self.jwt_token[0])}
             self.logger.debug("Transmitter: Posting data to {0}...".format(url))
             try:
-                r = self.session.post(url, headers=headers, data=json, verify=self.verify_ssl())
+                if sample_type == "AVERAGE":
+                    r = self.session.post(url, headers=headers, data=rebuilt_json, verify=self.verify_ssl())
+                else:
+                    r = self.session.post(url, headers=headers, data=converted_json, verify=self.verify_ssl())
             except ConnectionError as e:
                 raise TransmissionException("POST failed due to error: {0}".format(str(e)))
             self.logger.debug("Transmitter: Status code was {0}".format(r.status_code))
