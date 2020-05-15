@@ -1,0 +1,14 @@
+version: '2'
+volumes:
+  sampler_data:
+services:
+  sensor_sampler:
+    build: ./sensors
+    volumes:
+      - 'sampler_data:/sampler/spool'
+    privileged: true
+  sensor_transmitter:
+    build: ./sensors_transmit
+    volumes:
+      - 'sampler_data:/sampler/spool'
+    privileged: true

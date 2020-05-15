@@ -1,0 +1,12 @@
+FROM balenalib/%%BALENA_MACHINE_NAME%%-python:3-stretch-run
+
+RUN install_packages python3 rpi.gpio python3-wheel git build-essential libffi-dev libssl-dev wget
+RUN pip install requests requests-toolbelt
+
+WORKDIR /usr/src/app
+
+COPY . ./
+
+RUN python3 /usr/src/app/sensors/setup.py install
+
+CMD ["/usr/src/app/sensors/begin.sh"]

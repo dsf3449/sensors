@@ -1,0 +1,2 @@
+devicenum,deploybatch,deploydate,organization,site,address,locationid,stathingid,thname,thdesc,thnetid,thdeploytime,jwt_id,jwt_key,large_thing
+1,8,9/7/18,CGI,LDEQ,"700 Cajundome Blvd, Lafayette, LA 70506",19b03cc8-6848-11e8-b990-83288b7eb672,,Small Thing 1,Small Thing 1,LEaRN AQ,2018-09-07T12:00:00-0500,,,FALSE
